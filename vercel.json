@@ -1,7 +1,11 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/eventos/:path*",
+      "destination": "/"
+    },
+    {
+      "source": "/evento/:path*",
       "destination": "/"
     }
   ]
