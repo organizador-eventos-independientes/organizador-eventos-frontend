@@ -17,4 +17,4 @@ export function toDateTimeLocal(iso) {
 }
 
 // Valor de <input type="datetime-local"> -> ISO (UTC)
-export const fromDateTimeLocal = (value) => (value ? new Date(value).toISOString() : '')
+export const fromDateTimeLocal = (value) => value || ''
