@@ -1,12 +1,9 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
-      "source": "/eventos/:path*",
-      "destination": "/"
-    },
-    {
-      "source": "/evento/:path*",
-      "destination": "/"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
