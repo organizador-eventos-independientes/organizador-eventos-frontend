@@ -14,7 +14,7 @@ function App() {
           <Link to="/eventos" className="topbar__brand">Organizador de eventos</Link>
           {USE_MOCK && (
             <span className="topbar__mode" title="Define VITE_API_URL para conectar con el backend">
-              Modo demo (datos locales)
+              Usuario (Prueba)
             </span>
           )}
         </header>
