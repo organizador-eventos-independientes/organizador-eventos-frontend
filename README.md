@@ -1,16 +1,43 @@
-# React + Vite
+# Organizador de eventos – Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + Vite + React Router. Implementa:
 
-Currently, two official plugins are available:
+- **US-01** Crear evento (`/eventos/nuevo`): formulario controlado con validación en cliente, mensajes junto a cada campo, toast de éxito y redirección al detalle.
+- **US-02** Gestiones logísticas: se crean, listan, editan y eliminan de forma inline dentro de `/evento/:id` (sin rutas adicionales).
+- **US-03** Editar/eliminar evento y gestiones: edición inline, modal de confirmación ("Esta acción no se puede deshacer"), reintento ante errores y estados vacíos.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Ejecutar
 
-## React Compiler
+```bash
+npm install
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Conectar con el backend
 
-## Expanding the ESLint configuration
+Crea `.env.local` a partir de `.env.example`:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```
+VITE_API_URL=http://localhost:3000/api
+```
+
+Si `VITE_API_URL` no está definida, la app funciona en **modo demo** con datos guardados en `localStorage` (se indica en la barra superior).
+
+## Contrato de API esperado
+
+| Método | Ruta | Cuerpo |
+| --- | --- | --- |
+| GET | `/events` | – |
+| POST | `/events` | `{ name, type, client, date, location }` |
+| GET | `/events/:id` | – |
+| PATCH | `/events/:id` | campos a modificar |
+| DELETE | `/events/:id` | – (borra en cascada sus gestiones) |
+| GET | `/events/:id/subtasks` | – |
+| POST | `/events/:id/subtasks` | `{ name, deadline, estimatedHours }` |
+| PATCH | `/events/:id/subtasks/:subtaskId` | campos a modificar |
+| DELETE | `/events/:id/subtasks/:subtaskId` | – |
+
+- `type`: `boda | social | corporativo | cumpleanos | otro`
+- `date`: ISO 8601 (fecha y hora); `deadline`: `YYYY-MM-DD`; `estimatedHours`: número > 0.
+- Respuestas: el recurso directo o envuelto como `{ data, message }`.
+- Errores de validación (400): `{ message, errors: { campo: "mensaje" } }` o `{ message, errors: [{ field, message }] }`; se muestran junto al campo correspondiente.
