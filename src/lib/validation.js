@@ -1,3 +1,5 @@
+import { nowDateTimeLocal, toDateTimeLocal, todayYmd } from './format'
+
 export const EVENT_TYPES = [
   { value: 'boda', label: 'Boda', hint: 'Ceremonia y recepción de una pareja.' },
   { value: 'social', label: 'Social', hint: 'Reuniones, fiestas o celebraciones informales.' },
@@ -13,7 +15,9 @@ const isBlank = (v) => v == null || String(v).trim() === ''
 const isValidDate = (v) => !Number.isNaN(new Date(v).getTime())
 
 // Devuelve { campo: 'mensaje' } con los errores; objeto vacío si es válido.
-export function validateEvent(data) {
+// `original` es el valor guardado al editar: si la fecha no cambió no se exige
+// que sea futura, para poder editar otros campos de un evento ya pasado.
+export function validateEvent(data, original) {
   const errors = {}
 
   if (isBlank(data.name)) errors.name = 'Escribe el nombre del evento.'
@@ -28,6 +32,11 @@ export function validateEvent(data) {
 
   if (isBlank(data.date)) errors.date = 'Selecciona la fecha y hora del evento.'
   else if (!isValidDate(data.date)) errors.date = 'La fecha no es válida.'
+  else if (
+    toDateTimeLocal(data.date) < nowDateTimeLocal() &&
+    toDateTimeLocal(data.date) !== toDateTimeLocal(original?.date)
+  )
+    errors.date = 'La fecha y hora deben ser posteriores al momento actual.'
 
   if (isBlank(data.location)) errors.location = 'Indica el lugar del evento.'
   else if (data.location.trim().length > 160) errors.location = 'El lugar no puede superar 160 caracteres.'
@@ -35,7 +44,7 @@ export function validateEvent(data) {
   return errors
 }
 
-export function validateSubtask(data) {
+export function validateSubtask(data, original) {
   const errors = {}
 
   if (isBlank(data.name)) errors.name = 'Escribe el nombre de la gestión (ej. "Reservar salón").'
@@ -43,6 +52,8 @@ export function validateSubtask(data) {
 
   if (isBlank(data.deadline)) errors.deadline = 'Selecciona la fecha objetivo.'
   else if (!isValidDate(data.deadline)) errors.deadline = 'La fecha no es válida.'
+  else if (data.deadline.slice(0, 10) < todayYmd() && data.deadline !== original?.deadline?.slice(0, 10))
+    errors.deadline = 'El plazo no puede ser una fecha anterior a hoy.'
 
   const hours = Number(data.estimatedHours)
   if (isBlank(data.estimatedHours)) errors.estimatedHours = 'Indica las horas estimadas.'

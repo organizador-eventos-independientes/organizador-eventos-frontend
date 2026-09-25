@@ -3,7 +3,6 @@ import ToastProvider from './components/ToastProvider'
 import EventListPage from './pages/EventListPage'
 import EventCreatePage from './pages/EventCreatePage'
 import EventDetailPage from './pages/EventDetailPage'
-import { USE_MOCK } from './api/client'
 import './App.css'
 
 function App() {
@@ -12,11 +11,7 @@ function App() {
       <ToastProvider>
         <header className="topbar">
           <Link to="/eventos" className="topbar__brand">Organizador de eventos</Link>
-          {USE_MOCK && (
-            <span className="topbar__mode" title="Define VITE_API_URL para conectar con el backend">
-              Usuario (Prueba)
-            </span>
-          )}
+          <span className="topbar__mode">Usuario (Prueba)</span>
         </header>
         <main className="main">
           <Routes>

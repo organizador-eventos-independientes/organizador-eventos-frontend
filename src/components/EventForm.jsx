@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import Field from './Field'
 import { EVENT_TYPES, validateEvent } from '../lib/validation'
-import { fromDateTimeLocal, toDateTimeLocal } from '../lib/format'
+import { fromDateTimeLocal, nowDateTimeLocal, toDateTimeLocal } from '../lib/format'
 
 const EMPTY = { name: '', type: '', client: '', date: '', location: '' }
 const FIELD_ORDER = ['name', 'type', 'client', 'date', 'location']
@@ -38,7 +38,7 @@ export default function EventForm({
     const next = { ...values, [field]: value }
     setValues(next)
     // Tras el primer intento de guardar, la validación es en vivo.
-    if (submitted) setErrors(validateEvent(next))
+    if (submitted) setErrors(validateEvent(next, initialEvent))
   }
 
   function focusFirstError(errs) {
@@ -51,7 +51,7 @@ export default function EventForm({
     setSubmitted(true)
     setFormError('')
 
-    const errs = validateEvent(values)
+    const errs = validateEvent(values, initialEvent)
     setErrors(errs)
     if (Object.keys(errs).length) {
       focusFirstError(errs)
@@ -122,7 +122,7 @@ export default function EventForm({
       <div className="form__row">
         <Field id="event-date" label="Fecha y hora del evento" required error={errors.date}>
           {(p) => (
-            <input {...p} name="date" type="datetime-local" value={values.date}
+            <input {...p} name="date" type="datetime-local" min={nowDateTimeLocal()} value={values.date}
               onChange={(e) => update('date', e.target.value)} />
           )}
         </Field>

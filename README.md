@@ -8,36 +8,36 @@ React 19 + Vite + React Router. Implementa:
 
 ## Ejecutar
 
+Requiere el backend (Django) en ejecución.
+
 ```bash
 npm install
 npm run dev
 ```
 
-### Conectar con el backend
+### URL del backend
 
-Crea `.env.local` a partir de `.env.example`:
+Por defecto la app usa `http://localhost:8000/api`. Para cambiarla, crea `.env.local` a partir de `.env.example`:
 
 ```
-VITE_API_URL=http://localhost:3000/api
+VITE_API_URL=http://localhost:8000/api
 ```
 
-Si `VITE_API_URL` no está definida, la app funciona en **modo demo** con datos guardados en `localStorage` (se indica en la barra superior).
-
-## Contrato de API esperado
+## Contrato de API (Django)
 
 | Método | Ruta | Cuerpo |
 | --- | --- | --- |
-| GET | `/events` | – |
-| POST | `/events` | `{ name, type, client, date, location }` |
-| GET | `/events/:id` | – |
-| PATCH | `/events/:id` | campos a modificar |
-| DELETE | `/events/:id` | – (borra en cascada sus gestiones) |
-| GET | `/events/:id/subtasks` | – |
-| POST | `/events/:id/subtasks` | `{ name, deadline, estimatedHours }` |
-| PATCH | `/events/:id/subtasks/:subtaskId` | campos a modificar |
-| DELETE | `/events/:id/subtasks/:subtaskId` | – |
+| GET | `/eventos/` | – |
+| POST | `/eventos/` | `{ titulo, tipo, cliente, fecha, hora, lugar }` |
+| GET | `/eventos/:id/` | – |
+| PATCH | `/eventos/:id/` | `{ titulo, tipo, cliente, fecha, hora, lugar }` |
+| DELETE | `/eventos/:id/` | – (borra en cascada sus gestiones) |
+| GET | `/eventos/:id/subtareas/` | – |
+| POST | `/eventos/:id/subtareas/` | `{ nombre, plazo, horas_estimadas }` |
+| PATCH | `/subtareas/:id/` | `{ nombre, plazo, horas_estimadas }` |
+| DELETE | `/subtareas/:id/` | – |
 
-- `type`: `boda | social | corporativo | cumpleanos | otro`
-- `date`: ISO 8601 (fecha y hora); `deadline`: `YYYY-MM-DD`; `estimatedHours`: número > 0.
-- Respuestas: el recurso directo o envuelto como `{ data, message }`.
-- Errores de validación (400): `{ message, errors: { campo: "mensaje" } }` o `{ message, errors: [{ field, message }] }`; se muestran junto al campo correspondiente.
+- `tipo`: `boda | social | corporativo | cumpleanos | otro`
+- `fecha` / `plazo`: `YYYY-MM-DD`; `hora`: `HH:mm`; `horas_estimadas`: número > 0.
+- Reglas: la fecha y hora del evento deben ser futuras y el plazo de una gestión no puede ser anterior a hoy (el backend también debe validarlas).
+- Errores de validación (400): `{ campo: ["mensaje"] }` (formato DRF), `{ errors: { campo: "mensaje" } }` o `{ errors: [{ field, message }] }`.

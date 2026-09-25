@@ -16,5 +16,11 @@ export function toDateTimeLocal(iso) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+// Fecha y hora actual en formato de <input type="datetime-local"> (hora local)
+export const nowDateTimeLocal = () => toDateTimeLocal(new Date())
+
+// Fecha actual "YYYY-MM-DD" en hora local
+export const todayYmd = () => nowDateTimeLocal().slice(0, 10)
+
 // Valor de <input type="datetime-local"> -> ISO (UTC)
 export const fromDateTimeLocal = (value) => value || ''

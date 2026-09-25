@@ -1,7 +1,4 @@
-import { request, USE_MOCK } from './client'
-import { mockRequest } from './mock'
-
-const send = USE_MOCK ? mockRequest : request
+import { request as send } from './client'
 
 // Convierte los datos del Frontend al formato que espera Django
 function eventToBackend(data) {

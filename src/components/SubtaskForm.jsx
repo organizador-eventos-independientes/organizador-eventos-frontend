@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import Field from './Field'
 import { validateSubtask } from '../lib/validation'
+import { todayYmd } from '../lib/format'
 
 const FIELD_ORDER = ['name', 'deadline', 'estimatedHours']
 
@@ -25,7 +26,7 @@ export default function SubtaskForm({ idPrefix, initialSubtask, submitLabel, onS
   function update(field, value) {
     const next = { ...values, [field]: value }
     setValues(next)
-    if (submitted) setErrors(validateSubtask(next))
+    if (submitted) setErrors(validateSubtask(next, initialSubtask))
   }
 
   function focusFirstError(errs) {
@@ -38,7 +39,7 @@ export default function SubtaskForm({ idPrefix, initialSubtask, submitLabel, onS
     setSubmitted(true)
     setFormError('')
 
-    const errs = validateSubtask(values)
+    const errs = validateSubtask(values, initialSubtask)
     setErrors(errs)
     if (Object.keys(errs).length) {
       focusFirstError(errs)
@@ -91,7 +92,7 @@ export default function SubtaskForm({ idPrefix, initialSubtask, submitLabel, onS
         </Field>
         <Field id={`${idPrefix}-deadline`} label="Plazo" required error={errors.deadline}>
           {(p) => (
-            <input {...p} name="deadline" type="date" value={values.deadline}
+            <input {...p} name="deadline" type="date" min={todayYmd()} value={values.deadline}
               onChange={(e) => update('deadline', e.target.value)} />
           )}
         </Field>
