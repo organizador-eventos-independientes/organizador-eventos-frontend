@@ -11,7 +11,6 @@ function App() {
       <ToastProvider>
         <header className="topbar">
           <Link to="/eventos" className="topbar__brand">Organizador de eventos</Link>
-          <span className="topbar__mode">Usuario (Prueba)</span>
         </header>
         <main className="main">
           <Routes>
