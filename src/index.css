@@ -16,28 +16,29 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.04);
 
   font: 16px/1.5 system-ui, 'Segoe UI', Roboto, sans-serif;
-  color-scheme: light dark;
+  color-scheme: light;
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #d1d5db;
-    --text-muted: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #121318;
-    --surface: #1b1c23;
-    --border: #2e303a;
-    --accent: #a78bfa;
-    --accent-hover: #c4b5fd;
-    --accent-bg: rgba(167, 139, 250, 0.12);
-    --danger: #f87171;
-    --danger-bg: rgba(248, 113, 113, 0.12);
-    --success: #4ade80;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-  }
+/* data-theme lo fija el script de index.html (tema guardado o del sistema)
+   y lo cambia el botón ThemeToggle de la barra superior. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --text: #d1d5db;
+  --text-muted: #9ca3af;
+  --text-h: #f3f4f6;
+  --bg: #121318;
+  --surface: #1b1c23;
+  --border: #2e303a;
+  --accent: #a78bfa;
+  --accent-hover: #c4b5fd;
+  --accent-bg: rgba(167, 139, 250, 0.12);
+  --danger: #f87171;
+  --danger-bg: rgba(248, 113, 113, 0.12);
+  --success: #4ade80;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 *,

@@ -5,6 +5,22 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Organizador de eventos</title>
+    <script>
+      // Aplica el tema guardado (o, si no hay, el del sistema) antes del primer
+      // pintado para evitar un parpadeo. Ver src/components/ThemeToggle.jsx.
+      (() => {
+        let theme
+        try {
+          theme = localStorage.getItem('organizador-eventos.theme')
+        } catch {
+          // Sin acceso al almacenamiento: se usa el tema del sistema.
+        }
+        if (theme !== 'light' && theme !== 'dark') {
+          theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        }
+        document.documentElement.dataset.theme = theme
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

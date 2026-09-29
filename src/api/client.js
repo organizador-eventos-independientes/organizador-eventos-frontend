@@ -1,3 +1,5 @@
+import { expireSession, getSession } from '../lib/session'
+
 // Cliente HTTP para el backend. La URL base se define con VITE_API_URL
 // (ej. http://localhost:8000/api); por defecto apunta al servidor local de Django.
 export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/$/, '')
@@ -61,11 +63,16 @@ function parseMessage(body, status) {
 }
 
 export async function request(path, { method = 'GET', body } = {}) {
+  const token = getSession()?.token
+  const headers = {}
+  if (body) headers['Content-Type'] = 'application/json'
+  if (token) headers.Authorization = `Token ${token}`
+
   let res
   try {
     res = await fetch(`${API_URL}${path}`, {
       method,
-      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      headers,
       body: body ? JSON.stringify(body) : undefined,
     })
   } catch {
@@ -75,6 +82,13 @@ export async function request(path, { method = 'GET', body } = {}) {
   if (res.status === 204) return null
 
   const json = await res.json().catch(() => null)
+
+  if (res.status === 401 && token) {
+    // El servidor ya no acepta el token (p. ej. se cerró la sesión en otro
+    // navegador): se cierra aquí también y las rutas privadas llevan al login.
+    expireSession(token)
+    throw new ApiError('Tu sesión expiró. Inicia sesión de nuevo.', { status: 401 })
+  }
 
   if (!res.ok) {
     throw new ApiError(parseMessage(json, res.status), {
