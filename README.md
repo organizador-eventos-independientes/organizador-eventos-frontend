@@ -5,6 +5,14 @@ React 19 + Vite + React Router. Implementa:
 - **US-01** Crear evento (`/eventos/nuevo`): formulario controlado con validación en cliente, mensajes junto a cada campo, toast de éxito y redirección al detalle.
 - **US-02** Gestiones logísticas: se crean, listan, editan y eliminan de forma inline dentro de `/evento/:id` (sin rutas adicionales).
 - **US-03** Editar/eliminar evento y gestiones: edición inline, modal de confirmación ("Esta acción no se puede deshacer"), reintento ante errores y estados vacíos.
+- **US-04** Vista **Hoy** (`/hoy`): agrupa las gestiones de todos los eventos en *Vencidas*, *Para hoy* y *Próximas (7 días)*, con la regla de orden visible.
+
+### Regla de la vista Hoy
+
+1. Grupos en este orden: **Vencidas** (plazo antes de hoy), **Para hoy** (plazo = hoy), **Próximas** (de mañana a 7 días; constante `UPCOMING_DAYS` en `src/lib/today.js`).
+2. Vencidas: la más antigua primero. Próximas: la más cercana primero.
+3. Empate de plazo: menor `horas_estimadas` primero.
+4. Gestiones con plazo a más de 7 días no se muestran en esta vista.
 
 ## Ejecutar
 

@@ -84,6 +84,20 @@ export const listSubtasks = async (eventId) => {
   return data.map(subtaskToFrontend)
 }
 
+// Todas las gestiones de todos los eventos, cada una con { eventId, eventName }.
+// Si el backend expone un endpoint agregado (ej. /subtareas/), basta con
+// cambiar esta función.
+export const listAllSubtasks = async () => {
+  const events = await listEvents()
+  const perEvent = await Promise.all(
+    events.map(async (ev) => {
+      const subtasks = await listSubtasks(ev.id)
+      return subtasks.map((s) => ({ ...s, eventId: ev.id, eventName: ev.name }))
+    }),
+  )
+  return perEvent.flat()
+}
+
 export const createSubtask = async (eventId, data) => {
   const response = await send(`/eventos/${eventId}/subtareas/`, {
     method: 'POST',
