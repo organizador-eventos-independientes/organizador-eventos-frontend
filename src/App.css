@@ -65,35 +65,88 @@
   font-weight: 600;
 }
 
+/* Siempre a la derecha, también cuando la barra baja a una segunda línea. */
 .topbar__end {
   display: flex;
   align-items: center;
-  gap: 8px 16px;
+  justify-content: flex-end;
+  gap: 8px 12px;
   flex-wrap: wrap;
+  margin-left: auto;
 }
 
-.topbar__user {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-left: 16px;
+/* ---------- Menú de usuario ---------- */
+.user-menu {
+  position: relative;
+  padding-left: 12px;
   border-left: 1px solid var(--border);
 }
 
-.topbar__username {
+.user-menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-h);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.user-menu__name {
   max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 600;
-  color: var(--text-h);
 }
 
-@media (max-width: 640px) {
-  .topbar__user {
-    padding-left: 0;
-    border-left: none;
-  }
+.user-menu:hover .user-menu__trigger,
+.user-menu:focus-within .user-menu__trigger {
+  background: var(--accent-bg);
+}
+
+/* El padding superior cubre el hueco entre el nombre y el panel para que el
+   menú no se cierre al bajar el cursor. */
+.user-menu__panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 100;
+  padding-top: 6px;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.12s, transform 0.12s, visibility 0.12s;
+}
+
+.user-menu:hover .user-menu__panel,
+.user-menu:focus-within .user-menu__panel {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+}
+
+.user-menu__item {
+  display: block;
+  min-width: 160px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  color: var(--danger);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.user-menu__item:hover {
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface));
 }
 
 .main {
@@ -659,6 +712,24 @@
 
 .today-group--upcoming {
   border-top-color: var(--accent);
+}
+
+.today-group--later {
+  border-top-color: var(--text-muted);
+}
+
+.today-item__kind {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
 }
 
 .today-group__count {

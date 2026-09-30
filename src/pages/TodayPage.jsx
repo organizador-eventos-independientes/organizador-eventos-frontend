@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { listEventsWithSubtasks } from '../api/events'
-import { groupSubtasks, relativeDeadline, UPCOMING_DAYS } from '../lib/today'
-import { formatDate, formatHours, todayYmd } from '../lib/format'
+import { groupSubtasks, relativeDeadline, relativeEventDate, UPCOMING_DAYS } from '../lib/today'
+import { formatDate, formatDateTime, formatHours, todayYmd } from '../lib/format'
 
 // `status` es el valor del filtro por estado en la URL (?estado=...).
 const GROUPS = [
@@ -10,26 +10,50 @@ const GROUPS = [
     key: 'overdue',
     status: 'vencidas',
     label: 'Vencidas',
-    title: 'Gestiones vencidas',
-    hint: 'Su plazo ya pasó. Atiéndelas primero.',
+    title: 'Vencidas',
+    hint: 'Su fecha ya pasó. Atiéndelas primero.',
   },
   {
     key: 'today',
     status: 'hoy',
     label: 'Para hoy',
     title: 'Para hoy',
-    hint: 'Urgentes del día: vencen hoy.',
+    hint: 'Urgentes del día: son hoy.',
   },
   {
     key: 'upcoming',
     status: 'proximas',
     label: 'Próximas',
     title: `Próximas (${UPCOMING_DAYS} días)`,
-    hint: `Vencen entre mañana y los próximos ${UPCOMING_DAYS} días.`,
+    hint: `Entre mañana y los próximos ${UPCOMING_DAYS} días.`,
+  },
+  {
+    key: 'later',
+    status: 'despues',
+    label: 'Más adelante',
+    title: 'Más adelante',
+    hint: `Después de los próximos ${UPCOMING_DAYS} días.`,
   },
 ]
 
-const countLabel = (n) => `${n} ${n === 1 ? 'gestión' : 'gestiones'}`
+const countLabel = (n) => `${n} ${n === 1 ? 'pendiente' : 'pendientes'}`
+
+// Eventos y gestiones en una sola lista para agruparlos con la misma regla.
+function toItems(events, subtasks) {
+  const eventItems = events.map((ev) => ({
+    key: `evento-${ev.id}`,
+    kind: 'evento',
+    name: ev.name,
+    deadline: ev.date.slice(0, 10),
+    estimatedHours: 0,
+    date: ev.date,
+    location: ev.location,
+    eventId: ev.id,
+    eventName: ev.name,
+  }))
+  const subtaskItems = subtasks.map((s) => ({ ...s, key: `gestion-${s.id}`, kind: 'gestion' }))
+  return [...eventItems, ...subtaskItems]
+}
 
 export default function TodayPage() {
   const [data, setData] = useState(null)
@@ -41,7 +65,7 @@ export default function TodayPage() {
     setData(null)
     try {
       const { events, subtasks } = await listEventsWithSubtasks()
-      setData({ events, groups: groupSubtasks(subtasks, todayYmd()) })
+      setData({ events, groups: groupSubtasks(toItems(events, subtasks), todayYmd()) })
     } catch {
       setError(true)
     }
@@ -88,30 +112,30 @@ export default function TodayPage() {
         </div>
       </header>
 
-      <aside className="rule" aria-labelledby="rule-title">
-        <h2 id="rule-title" className="rule__title">¿Cómo se ordena esto?</h2>
-        <p>
-          Primero las <strong>vencidas</strong> (la más antigua arriba), luego las <strong>de hoy</strong> y
-          después las <strong>próximas {UPCOMING_DAYS} días</strong> (la más cercana arriba).
-        </p>
-        <p>Si dos gestiones tienen el mismo plazo, va primero la de menos horas estimadas.</p>
-      </aside>
+      {/* La regla solo se muestra cuando ya hay algo que ordenar. */}
+      {data && data.events.length > 0 && (
+        <aside className="rule" aria-labelledby="rule-title">
+          <h2 id="rule-title" className="rule__title">¿Cómo se ordena esto?</h2>
+          <p>
+            Primero lo <strong>vencido</strong> (lo más antiguo arriba), luego lo <strong>de hoy</strong>, después
+            lo de los <strong>próximos {UPCOMING_DAYS} días</strong> y al final lo que viene <strong>más
+            adelante</strong> (lo más cercano arriba).
+          </p>
+          <p>Si dos tienen la misma fecha, va primero el evento y luego sus gestiones de menos horas estimadas.</p>
+        </aside>
+      )}
 
       {error ? (
         <div className="alert alert--error alert--block" role="alert">
-          <p>No pudimos cargar tus gestiones. Revisa tu conexión e inténtalo de nuevo.</p>
+          <p>No pudimos cargar tus eventos y gestiones. Revisa tu conexión e inténtalo de nuevo.</p>
           <button type="button" className="btn btn--ghost" onClick={load}>Reintentar</button>
         </div>
       ) : data === null ? (
-        <p className="loading" role="status">Cargando gestiones…</p>
+        <p className="loading" role="status">Cargando…</p>
       ) : totalCount === 0 ? (
         <div className="empty card">
-          <p className="empty__title">No tienes gestiones pendientes</p>
-          <p className="muted">
-            {data.groups.later.length > 0
-              ? `Tienes ${countLabel(data.groups.later.length)} con plazo después de los próximos ${UPCOMING_DAYS} días. ¿Deseas organizar un nuevo evento?`
-              : '¿Deseas organizar un nuevo evento?'}
-          </p>
+          <p className="empty__title">Aún no tienes eventos</p>
+          <p className="muted">Cuando crees un evento aparecerá aquí junto con sus gestiones, ordenado por fecha.</p>
           <Link to="/eventos/nuevo" className="btn btn--primary">Crear evento</Link>
         </div>
       ) : (
@@ -155,7 +179,7 @@ export default function TodayPage() {
                 {filtering ? (
                   <>Mostrando <strong>{shownCount}</strong> de {countLabel(totalCount)}.</>
                 ) : (
-                  `Mostrando todas tus gestiones (${totalCount}).`
+                  `Mostrando todo (${countLabel(totalCount)}).`
                 )}
               </p>
               {filtering && (
@@ -169,7 +193,7 @@ export default function TodayPage() {
           {shownCount === 0 ? (
             <div className="empty card">
               <p className="empty__title">No hay gestiones para estos filtros</p>
-              <p className="muted">Prueba con otro evento o estado, o limpia los filtros para ver todas tus gestiones.</p>
+              <p className="muted">Prueba con otro evento o estado, o limpia los filtros para ver todo.</p>
               <button type="button" className="btn btn--primary" onClick={clearFilters}>Limpiar filtros</button>
             </div>
           ) : (
@@ -187,21 +211,37 @@ export default function TodayPage() {
                   <p className="muted today-group__empty">Nada por aquí.</p>
                 ) : (
                   <ol className="subtasks">
-                    {g.items.map((s) => (
-                      <li key={s.id} className="subtasks__item">
-                        <div className="subtasks__main">
-                          <p className="subtasks__name">{s.name}</p>
-                          <p className="muted subtasks__meta">
-                            <span className="today-group__when">{relativeDeadline(s.daysLeft)}</span>
-                            <span>{formatDate(s.deadline)}</span>
-                            <span>{formatHours(s.estimatedHours)}</span>
-                          </p>
-                        </div>
-                        <Link to={`/evento/${s.eventId}`} className="btn btn--small btn--ghost">
-                          {s.eventName}
-                        </Link>
-                      </li>
-                    ))}
+                    {g.items.map((s) =>
+                      s.kind === 'evento' ? (
+                        <li key={s.key} className="subtasks__item">
+                          <div className="subtasks__main">
+                            <p className="subtasks__name">
+                              <span className="today-item__kind">Evento</span> {s.name}
+                            </p>
+                            <p className="muted subtasks__meta">
+                              <span className="today-group__when">{relativeEventDate(s.daysLeft)}</span>
+                              <span>{formatDateTime(s.date)}</span>
+                              <span>{s.location}</span>
+                            </p>
+                          </div>
+                          <Link to={`/evento/${s.eventId}`} className="btn btn--small btn--ghost">Ver evento</Link>
+                        </li>
+                      ) : (
+                        <li key={s.key} className="subtasks__item">
+                          <div className="subtasks__main">
+                            <p className="subtasks__name">{s.name}</p>
+                            <p className="muted subtasks__meta">
+                              <span className="today-group__when">{relativeDeadline(s.daysLeft)}</span>
+                              <span>{formatDate(s.deadline)}</span>
+                              <span>{formatHours(s.estimatedHours)}</span>
+                            </p>
+                          </div>
+                          <Link to={`/evento/${s.eventId}`} className="btn btn--small btn--ghost">
+                            {s.eventName}
+                          </Link>
+                        </li>
+                      ),
+                    )}
                   </ol>
                 )}
               </section>

@@ -5,8 +5,8 @@ React 19 + Vite + React Router. Implementa:
 - **US-01** Crear evento (`/eventos/nuevo`): formulario controlado con validación en cliente, mensajes junto a cada campo, toast de éxito y redirección al detalle.
 - **US-02** Gestiones logísticas: se crean, listan, editan y eliminan de forma inline dentro de `/evento/:id` (sin rutas adicionales).
 - **US-03** Editar/eliminar evento y gestiones: edición inline, modal de confirmación ("Esta acción no se puede deshacer"), reintento ante errores y estados vacíos.
-- **US-04** Vista **Hoy** (`/hoy`): agrupa las gestiones de todos los eventos en *Vencidas*, *Para hoy* y *Próximas (7 días)*, con la regla de orden visible.
-- **US-05** Filtros en **Hoy**: por evento y por estado de la gestión (*Vencidas*, *Para hoy*, *Próximas*). Se aplican sin reordenar (se mantiene la regla de prioridad), quedan en la URL (`/hoy?evento=3&estado=vencidas`) y se limpian con "Limpiar filtros". Si no hay resultados: "No hay gestiones para estos filtros".
+- **US-04** Vista **Hoy** (`/hoy`): agrupa los eventos y sus gestiones en *Vencidas*, *Para hoy*, *Próximas (7 días)* y *Más adelante*, con la regla de orden visible (se oculta mientras no haya eventos).
+- **US-05** Filtros en **Hoy**: por evento y por estado (*Vencidas*, *Para hoy*, *Próximas*, *Más adelante*). Se aplican sin reordenar (se mantiene la regla de prioridad), quedan en la URL (`/hoy?evento=3&estado=vencidas`) y se limpian con "Limpiar filtros". Si no hay resultados: "No hay gestiones para estos filtros".
 - **US-11** Inicio de sesión (`/login`): todas las demás rutas exigen sesión y, sin ella, redirigen al login. Tras entrar se vuelve a la ruta pedida (por defecto `/hoy`). Las credenciales incorrectas muestran "Credenciales inválidas" sin indicar si el usuario existe. Cada organizador solo ve sus propios datos (lo garantiza el backend). `/crear` lleva a `/eventos/nuevo`.
 
 ### Sesión
@@ -17,10 +17,9 @@ React 19 + Vite + React Router. Implementa:
 
 ### Regla de la vista Hoy
 
-1. Grupos en este orden: **Vencidas** (plazo antes de hoy), **Para hoy** (plazo = hoy), **Próximas** (de mañana a 7 días; constante `UPCOMING_DAYS` en `src/lib/today.js`).
+1. Grupos en este orden: **Vencidas** (fecha antes de hoy), **Para hoy** (fecha = hoy), **Próximas** (de mañana a 7 días; constante `UPCOMING_DAYS` en `src/lib/today.js`) y **Más adelante**. Cada evento entra por su fecha y cada gestión por su plazo.
 2. Vencidas: la más antigua primero. Próximas: la más cercana primero.
-3. Empate de plazo: menor `horas_estimadas` primero.
-4. Gestiones con plazo a más de 7 días no se muestran en esta vista.
+3. Empate de fecha: primero el evento y luego las gestiones con menos `horas_estimadas`.
 
 ## Ejecutar
 

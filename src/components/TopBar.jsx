@@ -3,7 +3,9 @@ import ThemeToggle from './ThemeToggle'
 import { logout } from '../api/auth'
 import { setSession, useSession } from '../lib/session'
 
-// Barra superior. Los módulos y el usuario solo aparecen con sesión iniciada.
+// Barra superior: cambio de tema a la izquierda; módulos y usuario a la derecha
+// (solo con sesión iniciada). "Cerrar sesión" aparece al pasar el cursor sobre
+// el usuario, o al enfocarlo con teclado o tocarlo en pantallas táctiles.
 export default function TopBar() {
   const session = useSession()
   const navigate = useNavigate()
@@ -28,11 +30,17 @@ export default function TopBar() {
             <NavLink to="/hoy" className="topbar__link">Hoy</NavLink>
             <NavLink to="/eventos" className="topbar__link">Mis eventos</NavLink>
           </nav>
-          <div className="topbar__user">
-            <span className="topbar__username" title={`Usuario: ${session.user.username}`}>{session.user.name}</span>
-            <button type="button" className="btn btn--small btn--ghost" onClick={handleLogout}>
-              Cerrar sesión
+          <div className="user-menu">
+            <button type="button" className="user-menu__trigger" aria-haspopup="true"
+              title={`Usuario: ${session.user.username}`}>
+              <span className="user-menu__name">{session.user.name}</span>
+              <span aria-hidden="true">▾</span>
             </button>
+            <div className="user-menu__panel">
+              <button type="button" className="user-menu__item" onClick={handleLogout}>
+                Cerrar sesión
+              </button>
+            </div>
           </div>
         </div>
       )}
