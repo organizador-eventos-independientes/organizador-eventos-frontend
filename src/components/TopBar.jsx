@@ -3,9 +3,10 @@ import ThemeToggle from './ThemeToggle'
 import { logout } from '../api/auth'
 import { setSession, useSession } from '../lib/session'
 
-// Barra superior: cambio de tema, título y módulos a la izquierda; usuario a la
-// derecha (módulos y usuario solo con sesión iniciada). "Cerrar sesión" aparece al pasar el cursor sobre
-// el usuario, o al enfocarlo con teclado o tocarlo en pantallas táctiles.
+// Barra superior: logo, título y módulos a la izquierda; cambio de tema y
+// usuario a la derecha (módulos y usuario solo con sesión iniciada). "Cerrar
+// sesión" aparece al pasar el cursor sobre el usuario, o al enfocarlo con
+// teclado o tocarlo en pantallas táctiles.
 export default function TopBar() {
   const session = useSession()
   const navigate = useNavigate()
@@ -21,8 +22,10 @@ export default function TopBar() {
   return (
     <header className="topbar">
       <div className="topbar__start">
-        <ThemeToggle />
-        <Link to="/eventos" className="topbar__brand">Organizador de eventos</Link>
+        <Link to="/eventos" className="topbar__brand">
+          <span className="topbar__logo" aria-hidden="true" />
+          Organizador de eventos
+        </Link>
         {session && (
           <nav className="topbar__nav" aria-label="Principal">
             <NavLink to="/hoy" className="topbar__link">Hoy</NavLink>
@@ -30,8 +33,9 @@ export default function TopBar() {
           </nav>
         )}
       </div>
-      {session && (
-        <div className="topbar__end">
+      <div className="topbar__end">
+        <ThemeToggle />
+        {session && (
           <div className="user-menu">
             <button type="button" className="user-menu__trigger" aria-haspopup="true"
               title={`Usuario: ${session.user.username}`}>
@@ -44,8 +48,8 @@ export default function TopBar() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </header>
   )
 }

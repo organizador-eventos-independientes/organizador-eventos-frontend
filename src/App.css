@@ -42,9 +42,24 @@
 }
 
 .topbar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-weight: 700;
   color: var(--text-h);
   text-decoration: none;
+}
+
+/* logo.png es la silueta del pulpo sobre fondo transparente; se usa como
+   máscara para pintarla con el color del texto: oscura en tema claro y
+   blanca en tema oscuro. */
+.topbar__logo {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  background: var(--text-h);
+  -webkit-mask: url('/logo.png') center / contain no-repeat;
+  mask: url('/logo.png') center / contain no-repeat;
 }
 
 .topbar__nav {
