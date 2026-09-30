@@ -2,9 +2,6 @@
 // fecha respecto a hoy y los ordena dentro de cada grupo. Los eventos entran
 // con horas estimadas 0: el mismo día aparecen antes que sus gestiones.
 
-// Ventana de la sección "Próximas", en días a partir de mañana.
-export const UPCOMING_DAYS = 7
-
 const DAY_MS = 24 * 60 * 60 * 1000
 
 // Días entre dos fechas "YYYY-MM-DD" (b - a). Se usa UTC para evitar
@@ -23,10 +20,10 @@ function byDeadlineThenEffort(a, b) {
   )
 }
 
-// Devuelve { overdue, today, upcoming, later }. `later` es lo que queda más
-// allá de la ventana de próximas.
-export function groupSubtasks(subtasks, todayYmd, upcomingDays = UPCOMING_DAYS) {
-  const groups = { overdue: [], today: [], upcoming: [], later: [] }
+// Devuelve { overdue, today, upcoming }: fecha anterior a hoy, igual a hoy y
+// posterior a hoy (US-04, escenario 1).
+export function groupSubtasks(subtasks, todayYmd) {
+  const groups = { overdue: [], today: [], upcoming: [] }
 
   for (const s of subtasks) {
     const deadline = s.deadline.slice(0, 10)
@@ -34,8 +31,7 @@ export function groupSubtasks(subtasks, todayYmd, upcomingDays = UPCOMING_DAYS) 
     const item = { ...s, deadline, daysLeft: diff }
     if (diff < 0) groups.overdue.push(item)
     else if (diff === 0) groups.today.push(item)
-    else if (diff <= upcomingDays) groups.upcoming.push(item)
-    else groups.later.push(item)
+    else groups.upcoming.push(item)
   }
 
   for (const list of Object.values(groups)) list.sort(byDeadlineThenEffort)

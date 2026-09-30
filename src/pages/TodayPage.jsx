@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { listEventsWithSubtasks } from '../api/events'
-import { groupSubtasks, relativeDeadline, relativeEventDate, UPCOMING_DAYS } from '../lib/today'
+import { groupSubtasks, relativeDeadline, relativeEventDate } from '../lib/today'
 import { formatDate, formatDateTime, formatHours, todayYmd } from '../lib/format'
 
 // `status` es el valor del filtro por estado en la URL (?estado=...).
@@ -10,7 +10,7 @@ const GROUPS = [
     key: 'overdue',
     status: 'vencidas',
     label: 'Vencidas',
-    title: 'Vencidas',
+    title: 'Gestiones vencidas',
     hint: 'Su fecha ya pasó. Atiéndelas primero.',
   },
   {
@@ -24,15 +24,8 @@ const GROUPS = [
     key: 'upcoming',
     status: 'proximas',
     label: 'Próximas',
-    title: `Próximas (${UPCOMING_DAYS} días)`,
-    hint: `Entre mañana y los próximos ${UPCOMING_DAYS} días.`,
-  },
-  {
-    key: 'later',
-    status: 'despues',
-    label: 'Más adelante',
-    title: 'Más adelante',
-    hint: `Después de los próximos ${UPCOMING_DAYS} días.`,
+    title: 'Próximas',
+    hint: 'Su fecha es posterior a hoy.',
   },
 ]
 
@@ -120,9 +113,8 @@ export default function TodayPage() {
         <aside className="rule" aria-labelledby="rule-title">
           <h2 id="rule-title" className="rule__title">¿Cómo se ordena esto?</h2>
           <p>
-            Primero lo <strong>vencido</strong> (lo más antiguo arriba), luego lo <strong>de hoy</strong>, después
-            lo de los <strong>próximos {UPCOMING_DAYS} días</strong> y al final lo que viene <strong>más
-            adelante</strong> (lo más cercano arriba).
+            Primero lo <strong>vencido</strong> (lo más antiguo arriba), luego lo <strong>de hoy</strong> y
+            después lo <strong>próximo</strong> (lo más cercano arriba).
           </p>
           <p>Si dos tienen la misma fecha, va primero el evento y luego sus gestiones de menos horas estimadas.</p>
         </aside>

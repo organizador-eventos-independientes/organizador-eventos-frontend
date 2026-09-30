@@ -717,10 +717,6 @@
   border-top-color: var(--accent);
 }
 
-.today-group--later {
-  border-top-color: var(--text-muted);
-}
-
 .today-item__kind {
   display: inline-block;
   margin-right: 4px;
@@ -743,9 +739,10 @@
   border-radius: 999px;
   background: var(--accent-bg);
   color: var(--text-h);
-  font-size: 0.85rem;
+  font-size: inherit;
+  line-height: inherit;
   text-align: center;
-  vertical-align: middle;
+  vertical-align: baseline;
 }
 
 .today-group__empty {
@@ -832,10 +829,11 @@
 
 .chip__count {
   min-width: 1.6em;
-  padding: 1px 6px;
+  padding: 0 6px;
   border-radius: 999px;
   background: var(--accent-bg);
-  font-size: 0.8rem;
+  font-size: inherit;
+  line-height: inherit;
   text-align: center;
 }
 
