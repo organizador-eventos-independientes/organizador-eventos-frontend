@@ -110,6 +110,9 @@ export default function TodayPage() {
           <h1 className="page__title">Hoy</h1>
           <p className="muted">Lo que requiere tu atención primero, en todos tus eventos.</p>
         </div>
+        {data?.events.length > 0 && (
+          <Link to="/eventos/nuevo" className="btn btn--primary">+ Crear evento</Link>
+        )}
       </header>
 
       {/* La regla solo se muestra cuando ya hay algo que ordenar. */}

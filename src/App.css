@@ -13,7 +13,12 @@
 .topbar__start {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.topbar__start .topbar__nav {
+  margin-left: 8px;
 }
 
 .theme-toggle {
@@ -78,8 +83,6 @@
 /* ---------- Menú de usuario ---------- */
 .user-menu {
   position: relative;
-  padding-left: 12px;
-  border-left: 1px solid var(--border);
 }
 
 .user-menu__trigger {
