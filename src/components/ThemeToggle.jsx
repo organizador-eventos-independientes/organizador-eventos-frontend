@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { flushSync } from 'react-dom'
 
 // Misma clave que lee el script de index.html, que aplica el tema antes del
 // primer pintado para que no haya parpadeo al cargar.
@@ -31,21 +32,47 @@ export default function ThemeToggle() {
     return () => darkQuery.removeEventListener('change', followSystem)
   }, [])
 
-  function toggleTheme() {
+  function toggleTheme(e) {
     const next = theme === 'dark' ? 'light' : 'dark'
-    setTheme(next)
     try {
       localStorage.setItem(STORAGE_KEY, next)
     } catch {
       // Sin almacenamiento (p. ej. navegación privada): el tema dura hasta recargar.
     }
+
+    const apply = () => {
+      document.documentElement.dataset.theme = next
+      flushSync(() => setTheme(next))
+    }
+    if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      apply()
+      return
+    }
+
+    // El tema nuevo se revela en un círculo que crece desde el botón hasta
+    // cubrir la pantalla.
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect()
+    const x = left + width / 2
+    const y = top + height / 2
+    const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))
+    const transition = document.startViewTransition(apply)
+    transition.ready
+      .then(() => {
+        document.documentElement.animate(
+          { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+          { duration: 550, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', pseudoElement: '::view-transition-new(root)' },
+        )
+      })
+      .catch(() => {})
   }
 
   const label = theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
 
   return (
     <button type="button" className="theme-toggle" onClick={toggleTheme} aria-label={label} title={label}>
-      {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+      <span key={theme} className="theme-toggle__icon">
+        {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+      </span>
     </button>
   )
 }

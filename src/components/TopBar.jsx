@@ -42,7 +42,7 @@ export default function TopBar() {
             <button type="button" className="user-menu__trigger" aria-haspopup="true"
               title={`Usuario: ${session.user.username}`}>
               <span className="user-menu__name">{session.user.name}</span>
-              <span aria-hidden="true">▾</span>
+              <span className="user-menu__caret" aria-hidden="true">▾</span>
             </button>
             <div className="user-menu__panel">
               <button type="button" className="user-menu__item" onClick={handleLogout}>

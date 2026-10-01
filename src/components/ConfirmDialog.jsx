@@ -19,12 +19,24 @@ export default function ConfirmDialog({
   useEffect(() => {
     const dialog = ref.current
     if (!dialog) return
-    if (open && !dialog.open) {
-      setError('')
-      dialog.showModal()
-    } else if (!open && dialog.open) {
+    if (open) {
+      dialog.classList.remove('dialog--closing')
+      if (!dialog.open) {
+        setError('')
+        dialog.showModal()
+      }
+      return
+    }
+    if (!dialog.open) return
+    // Se cierra cuando termina la animación de salida (.dialog--closing).
+    dialog.classList.add('dialog--closing')
+    function onEnd(e) {
+      if (e.target !== dialog) return
+      dialog.classList.remove('dialog--closing')
       dialog.close()
     }
+    dialog.addEventListener('animationend', onEnd)
+    return () => dialog.removeEventListener('animationend', onEnd)
   }, [open])
 
   async function handleConfirm() {
