@@ -878,6 +878,42 @@
   width: 100%;
 }
 
+/* Campo de contraseña con botón de ojo dentro del recuadro. */
+.password-input {
+  position: relative;
+}
+
+.field .password-input input {
+  padding-right: 46px;
+}
+
+/* Edge añade su propio ojo; se oculta para no mostrar dos. */
+.password-input input::-ms-reveal {
+  display: none;
+}
+
+.password-input__toggle {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.password-input__toggle:hover {
+  background: var(--accent-bg);
+  color: var(--text-h);
+}
+
 .auth-page__note {
   font-size: 0.9rem;
   text-align: center;

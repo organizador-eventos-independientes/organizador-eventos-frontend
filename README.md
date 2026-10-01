@@ -7,13 +7,13 @@ React 19 + Vite + React Router. Implementa:
 - **US-03** Editar/eliminar evento y gestiones: edición inline, modal de confirmación ("Esta acción no se puede deshacer"), reintento ante errores y estados vacíos.
 - **US-04** Vista **Hoy** (`/hoy`): agrupa los eventos y sus gestiones en *Gestiones vencidas*, *Para hoy* y *Próximas*, con la regla de orden visible (se oculta mientras no haya eventos).
 - **US-05** Filtros en **Hoy**: por evento y por estado (*Vencidas*, *Para hoy*, *Próximas*). Se aplican sin reordenar (se mantiene la regla de prioridad), quedan en la URL (`/hoy?evento=3&estado=vencidas`) y se limpian con "Limpiar filtros". Si no hay resultados: "No hay gestiones para estos filtros".
-- **US-11** Inicio de sesión (`/login`): todas las demás rutas exigen sesión y, sin ella, redirigen al login. Tras entrar se vuelve a la ruta pedida (por defecto `/hoy`). Las credenciales incorrectas muestran "Credenciales inválidas" sin indicar si el usuario existe. Cada organizador solo ve sus propios datos (lo garantiza el backend). `/crear` lleva a `/eventos/nuevo`.
+- **US-11** Inicio de sesión (`/login`): todas las demás rutas exigen sesión y, sin ella, redirigen al login. Tras entrar se vuelve a la ruta pedida (por defecto `/hoy`). Las credenciales incorrectas muestran "Credenciales inválidas" sin indicar si el usuario existe. Cada organizador solo ve sus propios datos (lo garantiza el backend). `/crear` lleva a `/eventos/nuevo`. Desde el login se puede crear una cuenta en `/registro` (nombre, usuario y contraseña); al registrarse se entra directamente.
 
 ### Sesión
 
 - El token se guarda en `localStorage` (clave `organizador-eventos.session`) y se envía en cada petición como `Authorization: Token <token>`.
 - Si el backend responde `401` (token revocado, p. ej. al cerrar sesión en otro navegador), la sesión se cierra y se vuelve al login.
-- "Cerrar sesión" invalida el token en el servidor. Las cuentas las crea el administrador (no hay registro público).
+- "Cerrar sesión" invalida el token en el servidor. Cualquier persona puede crear su cuenta en `/registro`; los datos se guardan en el backend.
 
 ### Regla de la vista Hoy
 
@@ -40,10 +40,11 @@ VITE_API_URL=http://localhost:8000/api
 
 ## Contrato de API (Django)
 
-Todas las rutas, salvo el login, exigen la cabecera `Authorization: Token <token>`.
+Todas las rutas, salvo el registro y el login, exigen la cabecera `Authorization: Token <token>`.
 
 | Método | Ruta | Cuerpo |
 | --- | --- | --- |
+| POST | `/auth/registro/` | `{ nombre, username, password }` → 201 `{ token, usuario }`; 400 `{ campo: ["mensaje"] }` si algo no es válido |
 | POST | `/auth/login/` | `{ username, password }` → `{ token, usuario: { id, username, nombre } }`; 400 si las credenciales son incorrectas |
 | POST | `/auth/logout/` | – (invalida el token) |
 | GET | `/eventos/` | – |

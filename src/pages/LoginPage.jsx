@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
-import { Navigate, useLocation } from 'react-router-dom'
+import { Link, Navigate, useLocation } from 'react-router-dom'
 import Field from '../components/Field'
+import PasswordInput from '../components/PasswordInput'
 import { login } from '../api/auth'
 import { setSession, useSession } from '../lib/session'
 
@@ -86,7 +87,7 @@ export default function LoginPage() {
 
           <Field id="login-password" label="Contraseña" error={errors.password}>
             {(p) => (
-              <input {...p} name="password" type="password" autoComplete="current-password"
+              <PasswordInput {...p} name="password" autoComplete="current-password"
                 value={values.password} onChange={(e) => update('password', e.target.value)} />
             )}
           </Field>
@@ -96,7 +97,9 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="muted auth-page__note">¿No tienes cuenta? Pídela al administrador del sistema.</p>
+        <p className="muted auth-page__note">
+          ¿No tienes cuenta? <Link to="/registro" state={location.state}>Regístrate</Link>
+        </p>
       </section>
     </div>
   )
