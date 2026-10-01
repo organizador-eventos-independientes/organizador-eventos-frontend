@@ -50,16 +50,63 @@
   text-decoration: none;
 }
 
-/* logo.png es la silueta del pulpo sobre fondo transparente; se usa como
-   máscara para pintarla con el color del texto: oscura en tema claro y
-   blanca en tema oscuro. */
-.topbar__logo {
+/* ---------- Logo (componente Logo) ----------
+   Capa de color como fondo y, encima, los trazos: una máscara pintada con el
+   color del texto del tema (oscura en tema claro, clara en tema oscuro). */
+.logo {
+  position: relative;
+  display: block;
   flex: none;
-  width: 34px;
-  height: 34px;
+  background: url('/logo-barra-color.png') center / contain no-repeat;
+}
+
+.logo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
   background: var(--text-h);
-  -webkit-mask: url('/logo.png') center / contain no-repeat;
-  mask: url('/logo.png') center / contain no-repeat;
+  -webkit-mask: url('/logo-barra-trazo.png') center / contain no-repeat;
+  mask: url('/logo-barra-trazo.png') center / contain no-repeat;
+}
+
+/* Las medidas respetan la proporción de la imagen (366×259). */
+.logo--barra {
+  width: 54px;
+  height: 38px;
+}
+
+.logo--inicio {
+  width: 220px;
+  height: 156px;
+  margin: 0 auto;
+}
+
+/* Nombre de la marca, con la letra del logo: serif, mayúsculas y espaciada. */
+.brand-name {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .brand-name {
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+  }
+}
+
+.logo-inicio {
+  margin-bottom: 18px;
+}
+
+.logo-inicio__name {
+  margin-top: 6px;
+  font-size: 1.3rem;
+  line-height: 1.2;
+  color: var(--text-h);
 }
 
 .topbar__nav {
@@ -876,6 +923,10 @@
 
 .auth-page__submit {
   width: 100%;
+}
+
+.auth-page__header {
+  text-align: center;
 }
 
 /* Campo de contraseña con botón de ojo dentro del recuadro. */

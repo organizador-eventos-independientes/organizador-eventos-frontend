@@ -10,7 +10,7 @@ const GROUPS = [
     key: 'overdue',
     status: 'vencidas',
     label: 'Vencidas',
-    title: 'Gestiones vencidas',
+    title: 'Vencidos',
     hint: 'Su fecha ya pasó. Atiéndelas primero.',
   },
   {
@@ -24,7 +24,7 @@ const GROUPS = [
     key: 'upcoming',
     status: 'proximas',
     label: 'Próximas',
-    title: 'Próximas',
+    title: 'Próximos',
     hint: 'Su fecha es posterior a hoy.',
   },
 ]

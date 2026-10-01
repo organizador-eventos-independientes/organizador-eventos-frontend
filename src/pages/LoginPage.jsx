@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Link, Navigate, useLocation } from 'react-router-dom'
 import Field from '../components/Field'
+import Logo from '../components/Logo'
 import PasswordInput from '../components/PasswordInput'
 import { login } from '../api/auth'
 import { setSession, useSession } from '../lib/session'
@@ -65,7 +66,8 @@ export default function LoginPage() {
   return (
     <div className="page auth-page">
       <section className="card" aria-labelledby="login-title">
-        <header>
+        <header className="auth-page__header">
+          <Logo variant="inicio" />
           <h1 id="login-title" className="page__title">Iniciar sesión</h1>
           <p className="muted">Entra para ver tus eventos, clientes y planes.</p>
         </header>

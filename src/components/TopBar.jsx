@@ -1,4 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
+import Logo from './Logo'
 import ThemeToggle from './ThemeToggle'
 import { logout } from '../api/auth'
 import { setSession, useSession } from '../lib/session'
@@ -23,8 +24,9 @@ export default function TopBar() {
     <header className="topbar">
       <div className="topbar__start">
         <Link to="/eventos" className="topbar__brand">
-          <span className="topbar__logo" aria-hidden="true" />
-          Organizador de eventos
+          <Logo variant="barra" />
+          <span className="brand-name">Slap Slap</span>
+          <span className="brand-name">/ organizador de eventos</span>
         </Link>
         {session && (
           <nav className="topbar__nav" aria-label="Principal">
