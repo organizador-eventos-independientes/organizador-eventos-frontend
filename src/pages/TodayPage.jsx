@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { listEventsWithSubtasks } from '../api/events'
 import { groupSubtasks, relativeDeadline, relativeEventDate } from '../lib/today'
 import { formatDate, formatDateTime, formatHours, todayYmd } from '../lib/format'
+import { eventTypeLabel } from '../lib/validation'
 
 // `status` es el valor del filtro por estado en la URL (?estado=...).
 const GROUPS = [
@@ -37,6 +38,7 @@ function toItems(events, subtasks) {
     key: `evento-${ev.id}`,
     kind: 'evento',
     name: ev.name,
+    type: ev.type,
     deadline: ev.date.slice(0, 10),
     estimatedHours: 0,
     date: ev.date,
@@ -245,32 +247,36 @@ export default function TodayPage() {
                   <ol className="subtasks">
                     {g.items.map((s) =>
                       s.kind === 'evento' ? (
-                        <li key={s.key} className="subtasks__item">
-                          <div className="subtasks__main">
-                            <p className="subtasks__name cap-row">
-                              <span className="today-item__kind">Evento</span> <span className="cap-text">{s.name}</span>
-                            </p>
-                            <p className="muted subtasks__meta">
-                              <span className="today-group__when">{relativeEventDate(s.daysLeft)}</span>
-                              <span>{formatDateTime(s.date)}</span>
-                              <span>{s.location}</span>
-                            </p>
+                        <li key={s.key} className="subtasks__item today-item">
+                          <span className={`badge badge--${s.type} today-item__type`}>
+                            <span className="cap-text">{eventTypeLabel(s.type)}</span>
+                          </span>
+                          <p className="subtasks__name today-item__name">{s.name}</p>
+                          <p className="muted subtasks__meta today-item__meta">
+                            <span className="today-group__when">{relativeEventDate(s.daysLeft)}</span>
+                            <span>{formatDateTime(s.date)}</span>
+                            <span>{s.location}</span>
+                          </p>
+                          <div className="today-item__actions">
+                            <Link to={`/evento/${s.eventId}`} className="btn btn--small btn--ghost">Ver evento</Link>
                           </div>
-                          <Link to={`/evento/${s.eventId}`} className="btn btn--small btn--ghost">Ver evento</Link>
                         </li>
                       ) : (
-                        <li key={s.key} className="subtasks__item">
-                          <div className="subtasks__main">
-                            <p className="subtasks__name">{s.name}</p>
-                            <p className="muted subtasks__meta">
-                              <span className="today-group__when">{relativeDeadline(s.daysLeft)}</span>
-                              <span>{formatDate(s.deadline)}</span>
-                              <span>{formatHours(s.estimatedHours)}</span>
-                            </p>
+                        <li key={s.key} className="subtasks__item today-item">
+                          <span className="badge badge--gestion today-item__type">
+                            <span className="cap-text">Gestión</span>
+                          </span>
+                          <p className="subtasks__name today-item__name">{s.name}</p>
+                          <p className="muted subtasks__meta today-item__meta">
+                            <span className="today-group__when">{relativeDeadline(s.daysLeft)}</span>
+                            <span>{formatDate(s.deadline)}</span>
+                            <span>{formatHours(s.estimatedHours)}</span>
+                          </p>
+                          <div className="today-item__actions">
+                            <Link to={`/evento/${s.eventId}`} className="btn btn--small btn--ghost" title={s.eventName}>
+                              {s.eventName}
+                            </Link>
                           </div>
-                          <Link to={`/evento/${s.eventId}`} className="btn btn--small btn--ghost">
-                            {s.eventName}
-                          </Link>
                         </li>
                       ),
                     )}

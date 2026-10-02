@@ -1169,24 +1169,25 @@
 }
 
 /* ---------- Vista Hoy ---------- */
+/* Color de cada grupo (borde superior, texto de la fecha y óvalo del número):
+   rojo para lo vencido, verde para lo de hoy y morado para lo próximo. */
 .today-group {
-  border-top: 4px solid var(--border);
+  --group-c: var(--accent-text);
+  border-top: 4px solid var(--group-bar, var(--accent));
 }
 
 .today-group--overdue {
-  border-top-color: var(--danger);
+  --group-c: var(--status-overdue);
+  --group-bar: var(--status-overdue);
 }
 
 .today-group--today {
-  border-top-color: var(--warning);
-}
-
-.today-group--upcoming {
-  border-top-color: var(--accent);
+  --group-c: var(--status-today);
+  --group-bar: var(--status-today);
 }
 
 /* ---------- Óvalos de la vista Hoy ----------
-   Número de cada grupo, número de los botones de estado y etiqueta "EVENTO".
+   Número de cada grupo, número de los botones de estado y tipo de evento.
    Para alinearlos sin ajustes a ojo, el texto de cada óvalo y el texto al que
    acompaña se recortan a la altura exacta de las mayúsculas y cifras
    (text-box: trim-both cap alphabetic). Así el óvalo es cifra + el mismo
@@ -1205,8 +1206,7 @@
 }
 
 .today-group__count,
-.chip__count,
-.today-item__kind {
+.chip__count {
   display: inline-block;
   flex: none;
   border-radius: 999px;
@@ -1227,27 +1227,88 @@
   font-variant-numeric: tabular-nums;
 }
 
-.today-item__kind {
-  padding: 0.5em 0.8em;
-  color: var(--accent-text);
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 /* Al recortar el texto la fila encogería; con el alto de su línea normal la
    separación con lo de abajo queda igual que en las demás filas. */
 .today-group .card__title {
   min-height: 1.25em;
 }
 
-.subtasks__name.cap-row {
-  min-height: 1.5em;
+/* ---------- Filas de la vista Hoy ----------
+   Cada fila (evento o gestión) es una rejilla: la etiqueta va en la esquina
+   superior derecha y el nombre, el detalle y los botones quedan pegados a la
+   izquierda, uno debajo de otro, en la misma línea vertical en toda la lista.
+   Como habrá varios botones por fila (hasta 4), van en su propia línea para
+   que el texto no se apriete. */
+.subtasks__item.today-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'name    type'
+    'meta    meta'
+    'actions actions';
+  align-items: center;
+  gap: 4px 16px;
+}
+
+.today-item__type {
+  grid-area: type;
+  justify-self: end;
+  /* Arriba, a la altura de la primera línea del nombre aunque este ocupe dos. */
+  align-self: start;
+  max-width: 100%;
+  margin: 1px 0 0;
+  padding: 6px 10px 6px 8px;
+  white-space: nowrap;
+}
+
+/* Las gestiones llevan una etiqueta neutra para distinguirlas de los eventos. */
+.badge--gestion {
+  --badge-c: var(--text-muted);
+}
+
+/* Líneas de 24px (1,5 × 16px): la etiqueta (22px, 1px abajo) queda centrada
+   con la primera línea del nombre. */
+.today-item__name {
+  grid-area: name;
+  align-self: start;
+  line-height: 1.5;
+}
+
+.today-item__meta {
+  grid-area: meta;
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+
+.today-item__actions {
+  grid-area: actions;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Botones de la fila: todos del mismo alto; un texto largo (el nombre del
+   evento en las gestiones) se corta con puntos suspensivos. */
+.today-item__actions .btn {
+  display: inline-block;
+  height: 34px;
+  max-width: 200px;
+  padding: 0 12px;
+  line-height: 32px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .today-group__count {
   color: var(--text-h);
   animation: pop-in 0.4s var(--ease-spring) 0.2s backwards;
+}
+
+.today-group--overdue .today-group__count,
+.today-group--today .today-group__count {
+  background: color-mix(in srgb, var(--group-c) 16%, transparent);
+  color: var(--group-c);
 }
 
 .today-group__empty {
@@ -1258,19 +1319,9 @@
   font-weight: 600;
 }
 
-.today-group--overdue .today-group__when {
-  color: var(--danger);
-}
-
+.today-group--overdue .today-group__when,
 .today-group--today .today-group__when {
-  color: var(--warning);
-}
-
-.today-group .subtasks__item .btn {
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: inline-block;
+  color: var(--group-c);
 }
 
 /* ---------- Filtros de la vista Hoy ----------

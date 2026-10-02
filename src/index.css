@@ -21,7 +21,9 @@
   --danger-hover: #c4110f;
   --danger-bg: rgba(233, 25, 22, 0.08);
   --success: #00875a;
-  --warning: #c2410c;
+  /* Estados de la vista Hoy: rojo vencido y verde de hoy (tonos de Twitch). */
+  --status-overdue: #e91916;
+  --status-today: #00875a;
   --on-status: #fff;
   --focus: 0 0 0 3px rgba(145, 70, 255, 0.4);
   --radius: 10px;
@@ -75,7 +77,8 @@
   --danger-hover: #ff8a88;
   --danger-bg: rgba(255, 107, 104, 0.12);
   --success: #00f593;
-  --warning: #ff9d4d;
+  --status-overdue: #ff4f4d;
+  --status-today: #00f593;
   --on-status: #0e0e10;
   --focus: 0 0 0 3px rgba(169, 112, 255, 0.55);
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.25);
