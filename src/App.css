@@ -112,10 +112,9 @@
     logo-float 4s ease-in-out 0.6s infinite;
 }
 
-/* Nombre de la marca, con la letra del logo: serif, mayúsculas y espaciada. */
+/* Nombre de la marca: la misma letra que el resto de la app, en mayúsculas y espaciada. */
 .brand-name {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-weight: 400;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-size: 0.8rem;
@@ -547,7 +546,7 @@
 .field select {
   font: inherit;
   color: var(--text-h);
-  background: var(--surface);
+  background-color: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 9px 12px;
@@ -556,6 +555,32 @@
     border-color var(--dur) var(--ease-out),
     box-shadow var(--dur) var(--ease-out),
     background-color var(--dur) var(--ease-out);
+}
+
+/* Lista desplegable con flecha propia: la nativa queda pegada al borde y, en
+   tema oscuro, brilla en blanco. La flecha se separa del borde y toma el color
+   del tema (se tiñe de morado al pasar el cursor o enfocar). */
+.field select {
+  appearance: none;
+  -webkit-appearance: none;
+  height: var(--control-h);
+  padding-block: 0;
+  padding-right: 40px;
+  background-image: var(--select-arrow);
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 12px 8px;
+  cursor: pointer;
+}
+
+.field select:hover,
+.field select:focus {
+  background-image: var(--select-arrow-hi);
+}
+
+.field select option {
+  background: var(--surface);
+  color: var(--text-h);
 }
 
 .field input:hover,
@@ -726,16 +751,28 @@
 /* ---------- Badges ---------- */
 .badge {
   --badge-c: var(--accent-text);
-  display: inline-block;
-  font-size: 0.75rem;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 2px 10px;
+  letter-spacing: 0.06em;
+  padding: 5px 10px 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--badge-c) 30%, transparent);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--badge-c) 14%, transparent);
+  background: color-mix(in srgb, var(--badge-c) 12%, transparent);
   color: var(--badge-c);
   margin-bottom: 6px;
+}
+
+.badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .badge--boda { --badge-c: var(--type-boda); }
@@ -743,12 +780,109 @@
 .badge--cumpleanos { --badge-c: var(--type-cumpleanos); }
 .badge--social { --badge-c: var(--type-social); }
 
-/* ---------- Event details ---------- */
+/* ---------- Cabecera del detalle de evento ----------
+   La etiqueta del tipo queda fuera de la tarjeta, pegada a su borde superior
+   izquierdo como la pestaña de una carpeta. Dentro, el nombre y los botones
+   Editar/Eliminar van centrados entre sí; en pantallas estrechas los botones
+   bajan debajo del nombre. */
+.event-wrap--tabbed > .card {
+  border-top-left-radius: 0;
+}
+
+/* El color de cada tipo lo pone .badge--<tipo> (--badge-c); :where() deja el
+   morado como valor por defecto sin pisar al del tipo. */
+:where(.event-tab) {
+  --badge-c: var(--accent);
+}
+
+.event-tab {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  overflow: hidden;
+  margin-bottom: -1px;
+  padding: 7px 16px 6px;
+  border: 1px solid var(--badge-c);
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  background: var(--badge-c);
+  color: var(--on-status);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform-origin: bottom left;
+  transition: transform var(--dur) var(--ease-spring), box-shadow var(--dur) var(--ease-out);
+  animation: tab-in 0.55s var(--ease-spring) 0.1s backwards;
+}
+
+.event-tab.badge--otro {
+  color: var(--on-accent);
+}
+
+/* Destello que cruza la pestaña una vez al aparecer. */
+.event-tab::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.55) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: tab-shine 0.9s var(--ease-out) 0.7s forwards;
+}
+
+.event-tab:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 -4px 14px color-mix(in srgb, var(--badge-c) 45%, transparent);
+}
+
+.event-tab:hover::after {
+  animation: tab-shine 0.7s var(--ease-out);
+}
+
+.event-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+
+.event-head__title {
+  flex: 1 1 220px;
+  min-width: 0;
+  margin-bottom: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Event details ----------
+   Tabla de dos columnas: las etiquetas a la izquierda, todas del mismo ancho,
+   y los valores alineados a su derecha, una fila por dato. */
 .details {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+  grid-template-columns: max-content 1fr;
+  column-gap: 24px;
   margin: 0;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.details > div {
+  display: contents;
+}
+
+.details dt,
+.details dd {
+  padding: 12px 0;
+  line-height: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.details > div:last-child > * {
+  border-bottom: none;
 }
 
 .details dt {
@@ -759,10 +893,26 @@
 }
 
 .details dd {
-  margin: 2px 0 0;
+  margin: 0;
   color: var(--text-h);
   font-weight: 500;
   overflow-wrap: anywhere;
+}
+
+/* En pantallas estrechas la etiqueta va encima de su valor. */
+@media (max-width: 480px) {
+  .details {
+    grid-template-columns: 1fr;
+  }
+
+  .details dt {
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .details dd {
+    padding-top: 2px;
+  }
 }
 
 /* ---------- Subtasks ---------- */
@@ -1019,22 +1169,6 @@
 }
 
 /* ---------- Vista Hoy ---------- */
-.rule {
-  padding: 14px 16px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--accent);
-  background: var(--surface);
-  font-size: 0.95rem;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.rule__title {
-  font-size: 0.95rem;
-}
-
 .today-group {
   border-top: 4px solid var(--border);
 }
@@ -1051,32 +1185,68 @@
   border-top-color: var(--accent);
 }
 
+/* ---------- Óvalos de la vista Hoy ----------
+   Número de cada grupo, número de los botones de estado y etiqueta "EVENTO".
+   Para alinearlos sin ajustes a ojo, el texto de cada óvalo y el texto al que
+   acompaña se recortan a la altura exacta de las mayúsculas y cifras
+   (text-box: trim-both cap alphabetic). Así el óvalo es cifra + el mismo
+   relleno arriba y abajo (número centrado), y la fila .cap-row centra con flex
+   esas cajas recortadas (óvalo alineado con las letras). */
+.cap-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cap-text {
+  display: inline-block;
+  min-width: 0;
+  text-box: trim-both cap alphabetic;
+}
+
+.today-group__count,
+.chip__count,
 .today-item__kind {
   display: inline-block;
-  margin-right: 4px;
-  padding: 1px 8px;
+  flex: none;
   border-radius: 999px;
   background: var(--accent-bg);
-  color: var(--accent-text);
-  font-size: 0.7rem;
   font-weight: 700;
-  text-transform: uppercase;
+  line-height: 1;
+  text-align: center;
+  text-box: trim-both cap alphabetic;
+}
+
+/* Alto = cifra (~0,7em) + 0,45em arriba y abajo = 1,6em; con el mismo ancho
+   mínimo, un solo dígito queda en un círculo. */
+.today-group__count,
+.chip__count {
+  min-width: 1.6em;
+  padding: 0.45em 0.55em;
+  font-size: 0.75em;
+  font-variant-numeric: tabular-nums;
+}
+
+.today-item__kind {
+  padding: 0.5em 0.8em;
+  color: var(--accent-text);
+  font-size: 0.68rem;
   letter-spacing: 0.04em;
-  vertical-align: middle;
+  text-transform: uppercase;
+}
+
+/* Al recortar el texto la fila encogería; con el alto de su línea normal la
+   separación con lo de abajo queda igual que en las demás filas. */
+.today-group .card__title {
+  min-height: 1.25em;
+}
+
+.subtasks__name.cap-row {
+  min-height: 1.5em;
 }
 
 .today-group__count {
-  display: inline-block;
-  min-width: 1.6em;
-  padding: 0 8px;
-  margin-left: 4px;
-  border-radius: 999px;
-  background: var(--accent-bg);
   color: var(--text-h);
-  font-size: inherit;
-  line-height: inherit;
-  text-align: center;
-  vertical-align: baseline;
   animation: pop-in 0.4s var(--ease-spring) 0.2s backwards;
 }
 
@@ -1103,9 +1273,116 @@
   display: inline-block;
 }
 
-/* ---------- Filtros de la vista Hoy ---------- */
+/* ---------- Filtros de la vista Hoy ----------
+   Plegados por defecto: la barra muestra el botón, cuántos filtros hay activos
+   y el resumen; las opciones se despliegan al pulsar el botón. La altura se
+   anima con la fila de la rejilla (0fr -> 1fr), sin medir el contenido. */
 .filters {
-  gap: 14px;
+  /* Controles más bajos que en los formularios (44px); la letra no cambia. */
+  --control-h: 34px;
+  gap: 0;
+  padding: 14px 16px;
+}
+
+.filters .chip {
+  padding: 0 12px;
+}
+
+.filters__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.filters__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-h);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.filters__toggle:hover {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+}
+
+.filters__toggle:active {
+  transform: scale(0.96);
+}
+
+.filters__toggle[aria-expanded='true'] {
+  border-color: var(--accent);
+}
+
+.filters__icon {
+  color: var(--accent-text);
+}
+
+.filters__badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.4em;
+  height: 1.4em;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  animation: pop-in 0.35s var(--ease-spring);
+}
+
+.filters__caret {
+  color: var(--text-muted);
+  transition: transform var(--dur) var(--ease-out);
+}
+
+.filters__toggle[aria-expanded='true'] .filters__caret {
+  transform: rotate(180deg);
+}
+
+.filters__summary {
+  flex: 1 1 200px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.filters__summary strong {
+  color: var(--text-h);
+}
+
+.filters__panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.32s var(--ease-out), opacity var(--dur) var(--ease-out);
+}
+
+.filters__panel--open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+/* El margen lateral deja sitio al aro de foco, que si no el recorte lo cortaría;
+   los márgenes verticales de .filters__row quedan dentro y se pliegan con él. */
+.filters__panel-inner {
+  min-height: 0;
+  margin-inline: -4px;
+  padding-inline: 4px;
+  overflow: hidden;
 }
 
 .filters__row {
@@ -1113,15 +1390,25 @@
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 16px 24px;
+  margin-block: 14px 4px;
 }
 
 .filters__event {
   flex: 1 1 220px;
 }
 
+/* Texto de "¿Cómo se ordena esto?" dentro de su panel. */
+.rule {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-block: 14px 4px;
+  font-size: 0.95rem;
+}
+
 .field select.filters__select--active {
   border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  background-color: color-mix(in srgb, var(--accent) 8%, var(--surface));
 }
 
 .chips {
@@ -1134,7 +1421,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
+  min-height: var(--control-h);
+  padding: 0 14px;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--surface);
@@ -1169,35 +1457,15 @@
   border-color: var(--accent);
   color: var(--on-accent);
   font-weight: 600;
-  box-shadow: var(--glow);
   animation: chip-pop 0.35s var(--ease-spring);
 }
 
 .chip__count {
-  min-width: 1.6em;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--accent-bg);
-  font-size: inherit;
-  line-height: inherit;
-  text-align: center;
   transition: background-color var(--dur) var(--ease-out);
 }
 
 .chip[aria-pressed='true'] .chip__count {
   background: rgba(255, 255, 255, 0.28);
-}
-
-.filters__summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  min-height: 32px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
-  font-size: 0.95rem;
 }
 
 /* ---------- Login ---------- */
@@ -1332,6 +1600,16 @@
 @keyframes dialog-out {
   from { opacity: 1; transform: none; }
   to { opacity: 0; transform: translateY(8px) scale(0.96); }
+}
+
+@keyframes tab-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.85); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes tab-shine {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(120%); }
 }
 
 @keyframes toast-in {

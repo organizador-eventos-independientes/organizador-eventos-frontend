@@ -74,40 +74,42 @@ export default function EventDetailPage() {
     <div className="page page--narrow">
       <Link to="/eventos" className="back-link">← Volver a mis eventos</Link>
 
-      <section className="card" aria-labelledby="event-title">
-        {editing ? (
-          <>
-            <h1 id="event-title" className="card__title">Editar evento</h1>
-            <EventForm
-              initialEvent={event}
-              submitLabel="Guardar cambios"
-              errorPrefix="No se pudo actualizar el evento."
-              onSubmit={handleUpdate}
-              onCancel={() => setEditing(false)}
-            />
-          </>
-        ) : (
-          <>
-            <header className="card__header">
-              <div>
-                <span className={`badge badge--${event.type}`}>{eventTypeLabel(event.type)}</span>
-                <h1 id="event-title" className="page__title">{event.name}</h1>
-              </div>
-              <div className="card__actions">
-                <button type="button" className="btn btn--ghost" onClick={() => setEditing(true)}>Editar</button>
-                <button type="button" className="btn btn--ghost-danger" onClick={() => setConfirmDelete(true)}>
-                  Eliminar
-                </button>
-              </div>
-            </header>
-            <dl className="details">
-              <div><dt>Fecha y hora</dt><dd>{formatDateTime(event.date)}</dd></div>
-              <div><dt>Lugar</dt><dd>{event.location}</dd></div>
-              <div><dt>Cliente / contacto</dt><dd>{event.client}</dd></div>
-            </dl>
-          </>
+      <div className={`event-wrap${editing ? '' : ' event-wrap--tabbed'}`}>
+        {!editing && (
+          <span className={`event-tab badge--${event.type}`}>{eventTypeLabel(event.type)}</span>
         )}
-      </section>
+        <section className="card" aria-labelledby="event-title">
+          {editing ? (
+            <>
+              <h1 id="event-title" className="card__title">Editar evento</h1>
+              <EventForm
+                initialEvent={event}
+                submitLabel="Guardar cambios"
+                errorPrefix="No se pudo actualizar el evento."
+                onSubmit={handleUpdate}
+                onCancel={() => setEditing(false)}
+              />
+            </>
+          ) : (
+            <>
+              <header className="event-head">
+                <h1 id="event-title" className="page__title event-head__title">{event.name}</h1>
+                <div className="card__actions event-head__actions">
+                  <button type="button" className="btn btn--ghost" onClick={() => setEditing(true)}>Editar</button>
+                  <button type="button" className="btn btn--ghost-danger" onClick={() => setConfirmDelete(true)}>
+                    Eliminar
+                  </button>
+                </div>
+              </header>
+              <dl className="details">
+                <div><dt>Fecha y hora</dt><dd>{formatDateTime(event.date)}</dd></div>
+                <div><dt>Lugar</dt><dd>{event.location}</dd></div>
+                <div><dt>Cliente / contacto</dt><dd>{event.client}</dd></div>
+              </dl>
+            </>
+          )}
+        </section>
+      </div>
 
       <SubtaskSection eventId={id} subtasks={subtasks} onChange={setSubtasks} />
 

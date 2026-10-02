@@ -10,21 +10,21 @@ const GROUPS = [
     key: 'overdue',
     status: 'vencidas',
     label: 'Vencidas',
-    title: 'Vencidos',
-    hint: 'Su fecha ya pasó. Atiéndelas primero.',
+    title: 'Vencidas',
+    hint: 'Su fecha ya pasó.',
   },
   {
     key: 'today',
     status: 'hoy',
     label: 'Para hoy',
     title: 'Para hoy',
-    hint: 'Urgentes del día: son hoy.',
+    hint: 'Urgentes del día.',
   },
   {
     key: 'upcoming',
     status: 'proximas',
     label: 'Próximas',
-    title: 'Próximos',
+    title: 'Próximas',
     hint: 'Su fecha es posterior a hoy.',
   },
 ]
@@ -51,6 +51,8 @@ function toItems(events, subtasks) {
 export default function TodayPage() {
   const [data, setData] = useState(null)
   const [error, setError] = useState(false)
+  // Panel desplegado de la barra de filtros: 'filters', 'rule' o ninguno.
+  const [openPanel, setOpenPanel] = useState(null)
   const [searchParams, setSearchParams] = useSearchParams()
 
   const load = useCallback(async () => {
@@ -75,6 +77,7 @@ export default function TodayPage() {
   const eventFilter = events.find((ev) => String(ev.id) === searchParams.get('evento'))?.id ?? null
   const statusFilter = GROUPS.find((g) => g.status === searchParams.get('estado'))?.status ?? null
   const filtering = eventFilter !== null || statusFilter !== null
+  const activeFilters = (eventFilter !== null) + (statusFilter !== null)
 
   function setFilter(name, value) {
     const next = new URLSearchParams(searchParams)
@@ -84,6 +87,9 @@ export default function TodayPage() {
   }
 
   const clearFilters = () => setSearchParams({}, { replace: true })
+
+  // Acordeón: abrir uno cierra el otro; volver a pulsarlo lo cierra.
+  const togglePanel = (name) => setOpenPanel((open) => (open === name ? null : name))
 
   // Filtrar no reordena: cada grupo conserva la regla de prioridad.
   const ofEvent = (list) => (eventFilter === null ? list : list.filter((s) => s.eventId === eventFilter))
@@ -108,18 +114,6 @@ export default function TodayPage() {
         )}
       </header>
 
-      {/* La regla solo se muestra cuando ya hay algo que ordenar. */}
-      {data && data.events.length > 0 && (
-        <aside className="rule" aria-labelledby="rule-title">
-          <h2 id="rule-title" className="rule__title">¿Cómo se ordena esto?</h2>
-          <p>
-            Primero lo <strong>vencido</strong> (lo más antiguo arriba), luego lo <strong>de hoy</strong> y
-            después lo <strong>próximo</strong> (lo más cercano arriba).
-          </p>
-          <p>Si dos tienen la misma fecha, va primero el evento y luego sus gestiones de menos horas estimadas.</p>
-        </aside>
-      )}
-
       {error ? (
         <div className="alert alert--error alert--block" role="alert">
           <p>No pudimos cargar tus eventos y gestiones. Revisa tu conexión e inténtalo de nuevo.</p>
@@ -135,42 +129,34 @@ export default function TodayPage() {
         </div>
       ) : (
         <>
-          <section className="card filters" aria-label="Filtros">
-            <div className="filters__row">
-              <div className="field filters__event">
-                <label htmlFor="filter-event" className="field__label">Evento</label>
-                <select
-                  id="filter-event"
-                  className={eventFilter !== null ? 'filters__select--active' : undefined}
-                  value={eventFilter ?? ''}
-                  onChange={(e) => setFilter('evento', e.target.value)}
-                >
-                  <option value="">Todos los eventos</option>
-                  {events.map((ev) => (
-                    <option key={ev.id} value={ev.id}>{ev.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="field">
-                <span id="filter-status" className="field__label">Estado</span>
-                <div className="chips" role="group" aria-labelledby="filter-status">
-                  <button type="button" className="chip" aria-pressed={statusFilter === null}
-                    onClick={() => setFilter('estado', null)}>
-                    Todas
-                  </button>
-                  {GROUPS.map((g) => (
-                    <button key={g.key} type="button" className="chip" aria-pressed={statusFilter === g.status}
-                      onClick={() => setFilter('estado', statusFilter === g.status ? null : g.status)}>
-                      {g.label} <span className="chip__count">{ofEvent(data.groups[g.key]).length}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="filters__summary">
-              <p aria-live="polite">
+          {/* Todo plegado por defecto para no abrumar. "Filtros" y "¿Cómo se ordena
+              esto?" son un acordeón: al abrir uno se cierra el otro. La barra siempre
+              muestra cuántos filtros hay activos y el resumen. */}
+          <section className="card filters" aria-label="Filtros y orden">
+            <div className="filters__bar">
+              <button type="button" className="filters__toggle" aria-expanded={openPanel === 'filters'}
+                aria-controls="filters-panel" onClick={() => togglePanel('filters')}>
+                <svg className="filters__icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M3 5h18l-7 8v6l-4 2v-8z" />
+                </svg>
+                Filtros
+                {filtering && (
+                  <span className="filters__badge" aria-label={`${activeFilters} activos`}>{activeFilters}</span>
+                )}
+                <span className="filters__caret" aria-hidden="true">▾</span>
+              </button>
+              <button type="button" className="filters__toggle" id="rule-toggle" aria-expanded={openPanel === 'rule'}
+                aria-controls="rule-panel" onClick={() => togglePanel('rule')}>
+                <svg className="filters__icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 11v5M12 8h.01" />
+                </svg>
+                ¿Cómo se ordena esto?
+                <span className="filters__caret" aria-hidden="true">▾</span>
+              </button>
+              <p className="filters__summary" aria-live="polite">
                 {filtering ? (
                   <>Mostrando <strong>{shownCount}</strong> de {countLabel(totalCount)}.</>
                 ) : (
@@ -182,6 +168,57 @@ export default function TodayPage() {
                   Limpiar filtros
                 </button>
               )}
+            </div>
+
+            <div id="rule-panel" className={`filters__panel${openPanel === 'rule' ? ' filters__panel--open' : ''}`}
+              role="region" aria-labelledby="rule-toggle" inert={openPanel !== 'rule'}>
+              <div className="filters__panel-inner">
+                <div className="rule">
+                  <p>
+                    Primero lo <strong>vencido</strong> (lo más antiguo arriba), luego lo <strong>de hoy</strong> y
+                    después lo <strong>próximo</strong> (lo más cercano arriba).
+                  </p>
+                  <p>Si dos tienen la misma fecha, va primero el evento y luego sus gestiones de menos horas estimadas.</p>
+                </div>
+              </div>
+            </div>
+
+            <div id="filters-panel" className={`filters__panel${openPanel === 'filters' ? ' filters__panel--open' : ''}`}
+              inert={openPanel !== 'filters'}>
+              <div className="filters__panel-inner">
+                <div className="filters__row">
+                  <div className="field filters__event">
+                    <label htmlFor="filter-event" className="field__label">Evento</label>
+                    <select
+                      id="filter-event"
+                      className={eventFilter !== null ? 'filters__select--active' : undefined}
+                      value={eventFilter ?? ''}
+                      onChange={(e) => setFilter('evento', e.target.value)}
+                    >
+                      <option value="">Todos los eventos</option>
+                      {events.map((ev) => (
+                        <option key={ev.id} value={ev.id}>{ev.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="field">
+                    <span id="filter-status" className="field__label">Estado</span>
+                    <div className="chips" role="group" aria-labelledby="filter-status">
+                      <button type="button" className="chip" aria-pressed={statusFilter === null}
+                        onClick={() => setFilter('estado', null)}>
+                        <span className="cap-text">Todas</span>
+                      </button>
+                      {GROUPS.map((g) => (
+                        <button key={g.key} type="button" className="chip" aria-pressed={statusFilter === g.status}
+                          onClick={() => setFilter('estado', statusFilter === g.status ? null : g.status)}>
+                          <span className="cap-text">{g.label}</span> <span className="chip__count">{ofEvent(data.groups[g.key]).length}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
 
@@ -196,8 +233,8 @@ export default function TodayPage() {
               <section key={g.key} className={`card today-group today-group--${g.key}`} aria-labelledby={`group-${g.key}`}>
                 <header className="card__header">
                   <div>
-                    <h2 id={`group-${g.key}`} className="card__title">
-                      {g.title} <span className="today-group__count">{g.items.length}</span>
+                    <h2 id={`group-${g.key}`} className="card__title cap-row">
+                      <span className="cap-text">{g.title}</span> <span className="today-group__count">{g.items.length}</span>
                     </h2>
                     <p className="muted">{g.hint}</p>
                   </div>
@@ -210,8 +247,8 @@ export default function TodayPage() {
                       s.kind === 'evento' ? (
                         <li key={s.key} className="subtasks__item">
                           <div className="subtasks__main">
-                            <p className="subtasks__name">
-                              <span className="today-item__kind">Evento</span> {s.name}
+                            <p className="subtasks__name cap-row">
+                              <span className="today-item__kind">Evento</span> <span className="cap-text">{s.name}</span>
                             </p>
                             <p className="muted subtasks__meta">
                               <span className="today-group__when">{relativeEventDate(s.daysLeft)}</span>
