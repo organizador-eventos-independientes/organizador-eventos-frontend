@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import DailyLimitForm from '../components/DailyLimitForm'
 import RescheduleForm from '../components/RescheduleForm'
-import { listEventsWithSubtasks, rescheduleSubtask } from '../api/events'
+import { getDailyLimit, listEventsWithSubtasks, rescheduleSubtask, updateDailyLimit } from '../api/events'
 import { groupSubtasks, relativeDeadline, relativeEventDate } from '../lib/today'
 import { formatDate, formatDateTime, formatHours, todayYmd } from '../lib/format'
 import { useToast } from '../lib/toast'
@@ -58,7 +59,7 @@ export default function TodayPage() {
   const { toast } = useToast()
   const [data, setData] = useState(null)
   const [error, setError] = useState(false)
-  // Panel desplegado de la barra de filtros: 'filters', 'rule' o ninguno.
+  // Panel desplegado de la barra de filtros: 'filters', 'rule', 'limit' o ninguno.
   const [openPanel, setOpenPanel] = useState(null)
   const [searchParams, setSearchParams] = useSearchParams()
   // Reprogramar (US-06): gestión con el formulario abierto y la última movida.
@@ -71,8 +72,13 @@ export default function TodayPage() {
     setError(false)
     setData(null)
     try {
-      const { events, subtasks } = await listEventsWithSubtasks()
-      setData({ events, items: toItems(events, subtasks) })
+      // Si el límite diario no carga, la vista funciona igual: el backend lo
+      // sigue aplicando al reprogramar.
+      const [{ events, subtasks }, dailyLimit] = await Promise.all([
+        listEventsWithSubtasks(),
+        getDailyLimit().catch(() => null),
+      ])
+      setData({ events, items: toItems(events, subtasks), dailyLimit })
     } catch {
       setError(true)
     }
@@ -105,17 +111,31 @@ export default function TodayPage() {
     focusAfterRender.current = item.key
   }
 
-  // Si falla, el error llega al formulario, que conserva la fecha elegida.
-  async function reschedule(item, deadline) {
-    const updated = await rescheduleSubtask(item.id, deadline)
+  // Si falla o hay conflicto de sobrecarga (US-07), el error llega al
+  // formulario, que conserva la fecha elegida.
+  async function reschedule(item, changes) {
+    const updated = await rescheduleSubtask(item.id, changes)
     setData((d) => ({
       ...d,
-      items: d.items.map((it) => (it.key === item.key ? { ...it, deadline: updated.deadline } : it)),
+      items: d.items.map((it) =>
+        it.key === item.key ? { ...it, deadline: updated.deadline, estimatedHours: updated.estimatedHours } : it,
+      ),
     }))
     setReschedulingKey(null)
     setMovedKey(item.key)
     focusAfterRender.current = item.key
-    toast({ message: 'Fecha actualizada.' })
+    toast({
+      message:
+        changes.estimatedHours != null
+          ? `Fecha actualizada y horas reducidas a ${formatHours(updated.estimatedHours)}.`
+          : 'Fecha actualizada.',
+    })
+  }
+
+  async function saveDailyLimit(hours) {
+    const dailyLimit = await updateDailyLimit(hours)
+    setData((d) => ({ ...d, dailyLimit }))
+    toast({ message: 'Límite diario actualizado.' })
   }
 
   // Filtros (US-05). Viven en la URL para conservarse al recargar la página; un
@@ -182,7 +202,7 @@ export default function TodayPage() {
           {/* Todo plegado por defecto para no abrumar. "Filtros" y "¿Cómo se ordena
               esto?" son un acordeón: al abrir uno se cierra el otro. La barra siempre
               muestra cuántos filtros hay activos y el resumen. */}
-          <section className="card filters" aria-label="Filtros y orden">
+          <section className="card filters" aria-label="Filtros, orden y límite diario">
             <div className="filters__bar">
               <button type="button" className="filters__toggle" aria-expanded={openPanel === 'filters'}
                 aria-controls="filters-panel" onClick={() => togglePanel('filters')}>
@@ -204,6 +224,17 @@ export default function TodayPage() {
                   <path d="M12 11v5M12 8h.01" />
                 </svg>
                 ¿Cómo se ordena esto?
+                <span className="filters__caret" aria-hidden="true">▾</span>
+              </button>
+              <button type="button" className="filters__toggle" id="limit-toggle" aria-expanded={openPanel === 'limit'}
+                aria-controls="limit-panel" onClick={() => togglePanel('limit')}>
+                <svg className="filters__icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 2" />
+                </svg>
+                Límite diario
+                {data.dailyLimit != null && <span className="filters__value">{formatHours(data.dailyLimit)}</span>}
                 <span className="filters__caret" aria-hidden="true">▾</span>
               </button>
               <p className="filters__summary" aria-live="polite">
@@ -230,6 +261,13 @@ export default function TodayPage() {
                   </p>
                   <p>Si dos tienen la misma fecha, va primero el evento y luego sus gestiones de menos horas estimadas.</p>
                 </div>
+              </div>
+            </div>
+
+            <div id="limit-panel" className={`filters__panel${openPanel === 'limit' ? ' filters__panel--open' : ''}`}
+              role="region" aria-labelledby="limit-toggle" inert={openPanel !== 'limit'}>
+              <div className="filters__panel-inner">
+                <DailyLimitForm limit={data.dailyLimit} onSave={saveDailyLimit} />
               </div>
             </div>
 

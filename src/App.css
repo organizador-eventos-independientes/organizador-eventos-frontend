@@ -1355,6 +1355,100 @@
   gap: 8px;
 }
 
+/* Conflicto por sobrecarga diaria (US-07): aviso ámbar dentro del formulario
+   con lo que ya hay ese día y tres opciones para resolverlo. */
+.conflict {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--warning) 40%, transparent);
+  border-left: 4px solid var(--warning);
+  border-radius: 8px;
+  background: var(--warning-bg);
+  font-size: 0.95rem;
+  animation: fade-down var(--dur) var(--ease-out);
+}
+
+.conflict:focus {
+  outline: none;
+}
+
+.conflict:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.conflict__title {
+  color: var(--warning);
+  font-weight: 700;
+}
+
+.conflict__title::before {
+  content: '⚠ ';
+}
+
+.conflict__list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.conflict__question {
+  margin-top: 4px;
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.conflict__options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.conflict__option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.conflict__option strong {
+  color: var(--text-h);
+  font-size: 0.95rem;
+}
+
+.conflict__option:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+}
+
+.conflict__option:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.conflict__option:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus);
+}
+
+.conflict__option:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* El brillo sobresale 12px a cada lado (sombras) para no pegarse al texto. */
 .subtasks__item.today-item--moved {
   --moved-c: color-mix(in srgb, var(--accent) 20%, transparent);
@@ -1468,12 +1562,15 @@
 }
 
 /* El margen lateral deja sitio al aro de foco, que si no el recorte lo cortaría;
-   los márgenes verticales de .filters__row quedan dentro y se pliegan con él. */
+   los márgenes verticales de .filters__row quedan dentro y se pliegan con él.
+   `clip` (y no solo `hidden`) impide que, al enfocar un campo mientras el panel
+   se abre, el navegador desplace el contenido y lo deje corrido. */
 .filters__panel-inner {
   min-height: 0;
   margin-inline: -4px;
   padding-inline: 4px;
   overflow: hidden;
+  overflow: clip;
 }
 
 .filters__row {
@@ -1486,6 +1583,24 @@
 
 .filters__event {
   flex: 1 1 220px;
+}
+
+/* Valor del límite diario junto a su botón (ej. "Límite diario 6 h"). */
+.filters__value {
+  color: var(--accent-text);
+}
+
+/* Formulario del límite diario (US-12) dentro de su panel. */
+.limit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-block: 14px 4px;
+  font-size: 0.95rem;
+}
+
+.limit-form .field {
+  max-width: 220px;
 }
 
 /* Texto de "¿Cómo se ordena esto?" dentro de su panel. */

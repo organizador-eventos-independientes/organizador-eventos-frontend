@@ -74,3 +74,14 @@ export function validateNewDeadline(deadline) {
   if (deadline.slice(0, 10) < todayYmd()) return 'La fecha objetivo no puede ser anterior a hoy.'
   return ''
 }
+
+// Límite diario de horas de gestión (US-12). Devuelve el mensaje de error o ''.
+export function validateDailyLimit(value) {
+  const hours = Number(value)
+  if (isBlank(value)) return 'Indica tu límite diario de horas.'
+  if (!Number.isFinite(hours)) return 'El límite debe ser un número (ej. 6 o 6.5).'
+  if (hours <= 0) return 'El límite diario debe ser mayor que 0.'
+  if (hours > 24) return 'El límite diario no puede superar 24 horas.'
+  if (!/^\d+(\.\d{1,2})?$/.test(String(value).trim())) return 'Usa máximo 2 decimales (ej. 6.5).'
+  return ''
+}

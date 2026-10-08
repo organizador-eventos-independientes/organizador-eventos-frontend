@@ -4,12 +4,14 @@ import { expireSession, getSession } from '../lib/session'
 // (ej. http://localhost:8000/api); por defecto apunta al servidor local de Django.
 export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/$/, '')
 
+// `body` es la respuesta del backend tal cual (p. ej. los datos de un conflicto 409).
 export class ApiError extends Error {
-  constructor(message, { status = 0, fieldErrors = {} } = {}) {
+  constructor(message, { status = 0, fieldErrors = {}, body = null } = {}) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.fieldErrors = fieldErrors
+    this.body = body
   }
 }
 
@@ -24,6 +26,7 @@ const FIELD_NAMES = {
   nombre: 'name',
   plazo: 'deadline',
   horas_estimadas: 'estimatedHours',
+  limite_horas_diarias: 'dailyLimit',
 }
 
 const firstMessage = (v) => (Array.isArray(v) ? String(v[0]) : String(v))
@@ -94,6 +97,7 @@ export async function request(path, { method = 'GET', body } = {}) {
     throw new ApiError(parseMessage(json, res.status), {
       status: res.status,
       fieldErrors: res.status === 400 ? parseFieldErrors(json) : {},
+      body: json,
     })
   }
 

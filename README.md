@@ -8,6 +8,8 @@ React 19 + Vite + React Router. Implementa:
 - **US-04** Vista **Hoy** (`/hoy`): agrupa los eventos y sus gestiones en *Gestiones vencidas*, *Para hoy* y *Próximas*, con la regla de orden visible (se oculta mientras no haya eventos).
 - **US-05** Filtros en **Hoy**: por evento y por estado (*Vencidas*, *Para hoy*, *Próximas*). Se aplican sin reordenar (se mantiene la regla de prioridad), quedan en la URL (`/hoy?evento=3&estado=vencidas`) y se limpian con "Limpiar filtros". Si no hay resultados: "No hay gestiones para estos filtros".
 - **US-06** Reprogramar gestión en **Hoy**: cada gestión tiene el botón "Reprogramar", que abre en la misma fila el campo "Nueva fecha objetivo" (no puede ser anterior a hoy, aunque la gestión esté vencida). Al guardar se muestra "Fecha actualizada." y la gestión pasa al grupo que le corresponde, resaltada un momento. Si falla, se muestra "No se pudo reprogramar" y se mantiene la fecha seleccionada para reintentar. Esc cancela.
+- **US-07** Conflicto por sobrecarga diaria al reprogramar: si con la gestión ese día pasa del límite diario (sumando las gestiones de todos los eventos; un día vacío empieza en 0 h), no se guarda y aparece el aviso "Quedarías con 7h de gestión planificadas (límite 6h)" con lo que ya hay ese día y tres opciones: *Mover a otro día* (vuelve al calendario), *Reducir horas estimadas* (la deja en lo que cabe) y *Posponer* (al primer día con espacio). Si cabe, se guarda directo. Llegar justo al límite está permitido.
+- **US-12** (lo necesario para US-07) Límite diario en **Hoy**: el botón "Límite diario" de la barra muestra el valor actual (6 h por defecto) y permite cambiarlo (mayor que 0 y hasta 24 h).
 - **US-11** Inicio de sesión (`/login`): todas las demás rutas exigen sesión y, sin ella, redirigen al login. Tras entrar se vuelve a la ruta pedida (por defecto `/hoy`). Las credenciales incorrectas muestran "Credenciales inválidas" sin indicar si el usuario existe. Cada organizador solo ve sus propios datos (lo garantiza el backend). `/crear` lleva a `/eventos/nuevo`. Desde el login se puede crear una cuenta en `/registro` (nombre, usuario y contraseña); al registrarse se entra directamente.
 
 ### Sesión
@@ -56,7 +58,9 @@ Todas las rutas, salvo el registro y el login, exigen la cabecera `Authorization
 | GET | `/eventos/:id/subtareas/` | – |
 | POST | `/eventos/:id/subtareas/` | `{ nombre, plazo, horas_estimadas }` |
 | PATCH | `/subtareas/:id/` | `{ nombre, plazo, horas_estimadas }` |
-| PATCH | `/subtareas/:id/reprogramar/` | `{ plazo }` → la gestión con su nueva fecha; 400 `{ detail: "No se pudo reprogramar.", plazo: ["motivo"] }` |
+| PATCH | `/subtareas/:id/reprogramar/` | `{ plazo, horas_estimadas? }` → la gestión con su nueva fecha; 400 `{ detail: "No se pudo reprogramar.", plazo: ["motivo"] }`; 409 `{ detail: "Quedarías con…", conflicto: {…} }` si ese día pasa del límite diario |
+| GET | `/configuracion/` | – → `{ limite_horas_diarias }` |
+| PATCH | `/configuracion/` | `{ limite_horas_diarias }` (mayor que 0 y hasta 24) |
 | DELETE | `/subtareas/:id/` | – |
 
 - `tipo`: `boda | social | corporativo | cumpleanos | otro`

@@ -117,11 +117,46 @@ export const updateSubtask = async (eventId, subtaskId, data) => {
 export const deleteSubtask = (eventId, subtaskId) =>
   send(`/subtareas/${subtaskId}/`, { method: 'DELETE' })
 
-// Reprogramar (US-06): solo cambia la fecha objetivo de la gestión.
-export const rescheduleSubtask = async (subtaskId, deadline) => {
-  const response = await send(`/subtareas/${subtaskId}/reprogramar/`, {
+// Conflicto por sobrecarga diaria (US-07) que devuelve el backend con un 409.
+function conflictToFrontend(data, message) {
+  return {
+    message,
+    date: data.fecha,
+    limit: Number(data.limite),
+    planned: Number(data.planificadas),
+    hours: Number(data.horas_gestion),
+    total: Number(data.total),
+    availableHours: Number(data.horas_disponibles),
+    nextFreeDate: data.siguiente_dia_disponible,
+    subtasks: data.gestiones_del_dia.map((s) => ({ ...subtaskToFrontend(s), eventName: s.evento_titulo })),
+  }
+}
+
+// Reprogramar (US-06): cambia la fecha objetivo y, si se indican, las horas
+// estimadas. Si ese día supera el límite diario no se guarda: el error trae
+// `conflict` con lo necesario para resolverlo (US-07).
+export const rescheduleSubtask = async (subtaskId, { deadline, estimatedHours }) => {
+  const body = { plazo: deadline }
+  if (estimatedHours != null) body.horas_estimadas = estimatedHours
+  try {
+    const response = await send(`/subtareas/${subtaskId}/reprogramar/`, { method: 'PATCH', body })
+    return subtaskToFrontend(response)
+  } catch (err) {
+    if (err.status === 409 && err.body?.conflicto) err.conflict = conflictToFrontend(err.body.conflicto, err.message)
+    throw err
+  }
+}
+
+// Límite diario de horas de gestión del organizador (US-12).
+export const getDailyLimit = async () => {
+  const data = await send('/configuracion/')
+  return Number(data.limite_horas_diarias)
+}
+
+export const updateDailyLimit = async (hours) => {
+  const data = await send('/configuracion/', {
     method: 'PATCH',
-    body: { plazo: deadline },
+    body: { limite_horas_diarias: hours },
   })
-  return subtaskToFrontend(response)
+  return Number(data.limite_horas_diarias)
 }

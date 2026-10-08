@@ -6,6 +6,10 @@ export const formatDateTime = (iso) => dateTimeFmt.format(new Date(iso))
 // Las fechas de plazo son "YYYY-MM-DD"; se interpretan en hora local.
 export const formatDate = (ymd) => dateFmt.format(new Date(`${ymd.slice(0, 10)}T00:00:00`))
 
+// "YYYY-MM-DD" -> "lunes, 13 de octubre" (para los textos de conflicto).
+const dayFmt = new Intl.DateTimeFormat('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
+export const formatDay = (ymd) => dayFmt.format(new Date(`${ymd.slice(0, 10)}T00:00:00`))
+
 export const formatHours = (h) => `${Number(h).toLocaleString('es-CO')} h`
 
 // ISO -> valor para <input type="datetime-local">

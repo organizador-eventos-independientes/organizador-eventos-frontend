@@ -21,6 +21,9 @@
   --danger-hover: #c4110f;
   --danger-bg: rgba(233, 25, 22, 0.08);
   --success: #00875a;
+  /* Aviso de conflicto por sobrecarga diaria (US-07): ámbar. */
+  --warning: #b45309;
+  --warning-bg: color-mix(in srgb, #d97706 9%, var(--surface));
   /* Estados de la vista Hoy: rojo vencido y verde de hoy (tonos de Twitch). */
   --status-overdue: #e91916;
   --status-today: #00875a;
@@ -77,6 +80,8 @@
   --danger-hover: #ff8a88;
   --danger-bg: rgba(255, 107, 104, 0.12);
   --success: #00f593;
+  --warning: #fbbf24;
+  --warning-bg: color-mix(in srgb, #fbbf24 10%, var(--surface));
   --status-overdue: #ff4f4d;
   --status-today: #00f593;
   --on-status: #0e0e10;
