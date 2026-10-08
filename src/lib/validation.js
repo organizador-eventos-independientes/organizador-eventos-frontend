@@ -1,4 +1,4 @@
-import { nowDateTimeLocal, toDateTimeLocal, todayYmd } from './format'
+import { formatDate, nowDateTimeLocal, toDateTimeLocal, todayYmd } from './format'
 
 export const EVENT_TYPES = [
   { value: 'boda', label: 'Boda', hint: 'Ceremonia y recepción de una pareja.' },
@@ -44,7 +44,12 @@ export function validateEvent(data, original) {
   return errors
 }
 
-export function validateSubtask(data, original) {
+// La fecha de una gestión no puede ser posterior a la del evento (el mismo día
+// sí). `eventDate` es la fecha y hora del evento; si falta, no se comprueba.
+const isAfterEvent = (deadline, eventDate) => Boolean(eventDate) && deadline.slice(0, 10) > eventDate.slice(0, 10)
+
+// `eventDate`: fecha del evento al que pertenece la gestión.
+export function validateSubtask(data, original, eventDate) {
   const errors = {}
 
   if (isBlank(data.name)) errors.name = 'Escribe el nombre de la gestión (ej. "Reservar salón").'
@@ -54,6 +59,8 @@ export function validateSubtask(data, original) {
   else if (!isValidDate(data.deadline)) errors.deadline = 'La fecha no es válida.'
   else if (data.deadline.slice(0, 10) < todayYmd() && data.deadline !== original?.deadline?.slice(0, 10))
     errors.deadline = 'El plazo no puede ser una fecha anterior a hoy.'
+  else if (isAfterEvent(data.deadline, eventDate))
+    errors.deadline = `El plazo no puede ser posterior a la fecha del evento (${formatDate(eventDate)}).`
 
   const hoursError = validateEstimatedHours(data.estimatedHours)
   if (hoursError) errors.estimatedHours = hoursError
@@ -74,11 +81,14 @@ export function validateEstimatedHours(value) {
 }
 
 // Reprogramar (US-06). Devuelve el mensaje de error o '' si la fecha es válida.
-// Una gestión vencida se puede mover, pero no a otra fecha ya pasada.
-export function validateNewDeadline(deadline) {
+// Una gestión vencida se puede mover, pero no a otra fecha ya pasada ni a una
+// posterior a la fecha del evento.
+export function validateNewDeadline(deadline, eventDate) {
   if (isBlank(deadline)) return 'Selecciona la nueva fecha objetivo.'
   if (!isValidDate(deadline)) return 'La fecha no es válida.'
   if (deadline.slice(0, 10) < todayYmd()) return 'La fecha objetivo no puede ser anterior a hoy.'
+  if (isAfterEvent(deadline, eventDate))
+    return `La fecha objetivo no puede ser posterior a la fecha del evento (${formatDate(eventDate)}).`
   return ''
 }
 

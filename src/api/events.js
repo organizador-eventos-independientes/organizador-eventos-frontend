@@ -84,7 +84,8 @@ export const listSubtasks = async (eventId) => {
   return data.map(subtaskToFrontend)
 }
 
-// Los eventos y todas sus gestiones, cada una con { eventId, eventName }.
+// Los eventos y todas sus gestiones, cada una con los datos de su evento
+// { eventId, eventName, eventType, eventDate }.
 // Si el backend expone un endpoint agregado (ej. /subtareas/), basta con
 // cambiar esta función.
 export const listEventsWithSubtasks = async () => {
@@ -92,7 +93,7 @@ export const listEventsWithSubtasks = async () => {
   const perEvent = await Promise.all(
     events.map(async (ev) => {
       const subtasks = await listSubtasks(ev.id)
-      return subtasks.map((s) => ({ ...s, eventId: ev.id, eventName: ev.name }))
+      return subtasks.map((s) => ({ ...s, eventId: ev.id, eventName: ev.name, eventType: ev.type, eventDate: ev.date }))
     }),
   )
   return { events, subtasks: perEvent.flat() }

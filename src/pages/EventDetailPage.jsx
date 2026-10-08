@@ -111,7 +111,7 @@ export default function EventDetailPage() {
         </section>
       </div>
 
-      <SubtaskSection eventId={id} subtasks={subtasks} onChange={setSubtasks} />
+      <SubtaskSection eventId={id} eventDate={event.date} subtasks={subtasks} onChange={setSubtasks} />
 
       <ConfirmDialog
         open={confirmDelete}

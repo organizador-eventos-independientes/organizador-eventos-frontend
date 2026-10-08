@@ -3,10 +3,9 @@ import { Link, useSearchParams } from 'react-router-dom'
 import DailyLimitForm from '../components/DailyLimitForm'
 import RescheduleForm from '../components/RescheduleForm'
 import { getDailyLimit, listEventsWithSubtasks, rescheduleSubtask, updateDailyLimit } from '../api/events'
-import { groupSubtasks, relativeDeadline, relativeEventDate } from '../lib/today'
-import { formatDate, formatDateTime, formatHours, todayYmd } from '../lib/format'
+import { groupSubtasks, relativeDeadline } from '../lib/today'
+import { formatDate, formatHours, todayYmd } from '../lib/format'
 import { useToast } from '../lib/toast'
-import { eventTypeLabel } from '../lib/validation'
 
 // `status` es el valor del filtro por estado en la URL (?estado=...).
 const GROUPS = [
@@ -35,23 +34,8 @@ const GROUPS = [
 
 const countLabel = (n) => `${n} ${n === 1 ? 'pendiente' : 'pendientes'}`
 
-// Eventos y gestiones en una sola lista para agruparlos con la misma regla.
-function toItems(events, subtasks) {
-  const eventItems = events.map((ev) => ({
-    key: `evento-${ev.id}`,
-    kind: 'evento',
-    name: ev.name,
-    type: ev.type,
-    deadline: ev.date.slice(0, 10),
-    estimatedHours: 0,
-    date: ev.date,
-    location: ev.location,
-    eventId: ev.id,
-    eventName: ev.name,
-  }))
-  const subtaskItems = subtasks.map((s) => ({ ...s, key: `gestion-${s.id}`, kind: 'gestion' }))
-  return [...eventItems, ...subtaskItems]
-}
+// Solo las gestiones: los eventos no aparecen como filas propias.
+const toItems = (subtasks) => subtasks.map((s) => ({ ...s, key: `gestion-${s.id}` }))
 
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -78,7 +62,7 @@ export default function TodayPage() {
         listEventsWithSubtasks(),
         getDailyLimit().then((limit) => limit.hours).catch(() => null),
       ])
-      setData({ events, items: toItems(events, subtasks), dailyLimit })
+      setData({ events, items: toItems(subtasks), dailyLimit })
     } catch {
       setError(true)
     }
@@ -196,11 +180,17 @@ export default function TodayPage() {
         </div>
       ) : data === null ? (
         <p className="loading" role="status">Cargando…</p>
-      ) : totalCount === 0 ? (
+      ) : data.events.length === 0 ? (
         <div className="empty card">
           <p className="empty__title">Aún no tienes eventos</p>
-          <p className="muted">Cuando crees un evento aparecerá aquí junto con sus gestiones, ordenado por fecha.</p>
+          <p className="muted">Cuando crees un evento y le agregues gestiones, aparecerán aquí ordenadas por fecha.</p>
           <Link to="/eventos/nuevo" className="btn btn--primary">Crear evento</Link>
+        </div>
+      ) : totalCount === 0 ? (
+        <div className="empty card">
+          <p className="empty__title">Aún no tienes gestiones</p>
+          <p className="muted">Agrega gestiones a tus eventos y aparecerán aquí ordenadas por fecha.</p>
+          <Link to="/eventos" className="btn btn--primary">Ver mis eventos</Link>
         </div>
       ) : (
         <>
@@ -264,7 +254,7 @@ export default function TodayPage() {
                     Primero lo <strong>vencido</strong> (lo más antiguo arriba), luego lo <strong>de hoy</strong> y
                     después lo <strong>próximo</strong> (lo más cercano arriba).
                   </p>
-                  <p>Si dos tienen la misma fecha, va primero el evento y luego sus gestiones de menos horas estimadas.</p>
+                  <p>Si dos gestiones tienen la misma fecha, va primero la de menos horas estimadas.</p>
                 </div>
               </div>
             </div>
@@ -337,56 +327,41 @@ export default function TodayPage() {
                   <p className="muted today-group__empty">Nada por aquí.</p>
                 ) : (
                   <ol className="subtasks">
-                    {g.items.map((s) =>
-                      s.kind === 'evento' ? (
-                        <li key={s.key} className="subtasks__item today-item">
-                          <span className={`badge badge--${s.type} today-item__type`}>
-                            <span className="cap-text">{eventTypeLabel(s.type)}</span>
-                          </span>
-                          <p className="subtasks__name today-item__name">{s.name}</p>
-                          <p className="muted subtasks__meta today-item__meta">
-                            <span className="today-group__when">{relativeEventDate(s.daysLeft)}</span>
-                            <span>{formatDateTime(s.date)}</span>
-                            <span>{s.location}</span>
-                          </p>
+                    {g.items.map((s) => (
+                      <li key={s.key}
+                        className={`subtasks__item today-item${reschedulingKey === s.key ? ' today-item--rescheduling' : ''}${movedKey === s.key ? ' today-item--moved' : ''}`}
+                        onAnimationEnd={(e) => e.animationName === 'moved-flash' && setMovedKey(null)}>
+                        {/* La etiqueta es el evento de la gestión, con el color de su tipo. */}
+                        <span className={`badge badge--${s.eventType} today-item__type`} title={s.eventName}>
+                          <span className="cap-text">{s.eventName}</span>
+                        </span>
+                        <p className="subtasks__name today-item__name">{s.name}</p>
+                        <p className="muted subtasks__meta today-item__meta">
+                          <span className="today-group__when">{relativeDeadline(s.daysLeft)}</span>
+                          <span>{formatDate(s.deadline)}</span>
+                          <span>{formatHours(s.estimatedHours)}</span>
+                        </p>
+                        {reschedulingKey === s.key ? (
+                          <RescheduleForm
+                            idPrefix={s.key}
+                            subtask={s}
+                            onSubmit={(deadline) => reschedule(s, deadline)}
+                            onCancel={() => cancelRescheduling(s)}
+                          />
+                        ) : (
                           <div className="today-item__actions">
-                            <Link to={`/evento/${s.eventId}`} className="btn btn--small btn--ghost">Ver evento</Link>
+                            <Link to={`/evento/${s.eventId}`} className="btn btn--small btn--ghost"
+                              aria-label={`Ver evento ${s.eventName}`}>
+                              Ver evento
+                            </Link>
+                            <button type="button" id={`reprogramar-${s.key}`} className="btn btn--small btn--ghost"
+                              onClick={() => startRescheduling(s)} aria-label={`Reprogramar gestión ${s.name}`}>
+                              Reprogramar
+                            </button>
                           </div>
-                        </li>
-                      ) : (
-                        <li key={s.key}
-                          className={`subtasks__item today-item${reschedulingKey === s.key ? ' today-item--rescheduling' : ''}${movedKey === s.key ? ' today-item--moved' : ''}`}
-                          onAnimationEnd={(e) => e.animationName === 'moved-flash' && setMovedKey(null)}>
-                          <span className="badge badge--gestion today-item__type">
-                            <span className="cap-text">Gestión</span>
-                          </span>
-                          <p className="subtasks__name today-item__name">{s.name}</p>
-                          <p className="muted subtasks__meta today-item__meta">
-                            <span className="today-group__when">{relativeDeadline(s.daysLeft)}</span>
-                            <span>{formatDate(s.deadline)}</span>
-                            <span>{formatHours(s.estimatedHours)}</span>
-                          </p>
-                          {reschedulingKey === s.key ? (
-                            <RescheduleForm
-                              idPrefix={s.key}
-                              subtask={s}
-                              onSubmit={(deadline) => reschedule(s, deadline)}
-                              onCancel={() => cancelRescheduling(s)}
-                            />
-                          ) : (
-                            <div className="today-item__actions">
-                              <Link to={`/evento/${s.eventId}`} className="btn btn--small btn--ghost" title={s.eventName}>
-                                {s.eventName}
-                              </Link>
-                              <button type="button" id={`reprogramar-${s.key}`} className="btn btn--small btn--ghost"
-                                onClick={() => startRescheduling(s)} aria-label={`Reprogramar gestión ${s.name}`}>
-                                Reprogramar
-                              </button>
-                            </div>
-                          )}
-                        </li>
-                      ),
-                    )}
+                        )}
+                      </li>
+                    ))}
                   </ol>
                 )}
               </section>

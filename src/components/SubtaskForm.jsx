@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import Field from './Field'
 import { validateSubtask } from '../lib/validation'
-import { todayYmd } from '../lib/format'
+import { formatDate, todayYmd } from '../lib/format'
 
 const FIELD_ORDER = ['name', 'deadline', 'estimatedHours']
 
@@ -14,8 +14,11 @@ function toFormValues(subtask) {
 }
 
 // Formulario inline de gestión logística. Si `onSubmit` falla se conservan
-// los valores ingresados y se muestra el error.
-export default function SubtaskForm({ idPrefix, initialSubtask, submitLabel, onSubmit, onCancel, resetOnSuccess = false }) {
+// los valores ingresados y se muestra el error. `eventDate` (fecha del evento)
+// es el último día permitido para el plazo.
+export default function SubtaskForm({
+  idPrefix, initialSubtask, eventDate, submitLabel, onSubmit, onCancel, resetOnSuccess = false,
+}) {
   const [values, setValues] = useState(() => toFormValues(initialSubtask))
   const [errors, setErrors] = useState({})
   const [submitted, setSubmitted] = useState(false)
@@ -26,7 +29,7 @@ export default function SubtaskForm({ idPrefix, initialSubtask, submitLabel, onS
   function update(field, value) {
     const next = { ...values, [field]: value }
     setValues(next)
-    if (submitted) setErrors(validateSubtask(next, initialSubtask))
+    if (submitted) setErrors(validateSubtask(next, initialSubtask, eventDate))
   }
 
   function focusFirstError(errs) {
@@ -39,7 +42,7 @@ export default function SubtaskForm({ idPrefix, initialSubtask, submitLabel, onS
     setSubmitted(true)
     setFormError('')
 
-    const errs = validateSubtask(values, initialSubtask)
+    const errs = validateSubtask(values, initialSubtask, eventDate)
     setErrors(errs)
     if (Object.keys(errs).length) {
       focusFirstError(errs)
@@ -90,10 +93,11 @@ export default function SubtaskForm({ idPrefix, initialSubtask, submitLabel, onS
               onChange={(e) => update('name', e.target.value)} autoFocus />
           )}
         </Field>
-        <Field id={`${idPrefix}-deadline`} label="Plazo" required error={errors.deadline}>
+        <Field id={`${idPrefix}-deadline`} label="Plazo" required error={errors.deadline}
+          hint={eventDate ? `Hasta la fecha del evento: ${formatDate(eventDate)}.` : undefined}>
           {(p) => (
-            <input {...p} name="deadline" type="date" min={todayYmd()} value={values.deadline}
-              onChange={(e) => update('deadline', e.target.value)} />
+            <input {...p} name="deadline" type="date" min={todayYmd()} max={eventDate?.slice(0, 10)}
+              value={values.deadline} onChange={(e) => update('deadline', e.target.value)} />
           )}
         </Field>
         <Field id={`${idPrefix}-hours`} label="Horas estimadas" required error={errors.estimatedHours}>

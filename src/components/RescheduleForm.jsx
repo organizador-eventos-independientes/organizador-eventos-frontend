@@ -5,9 +5,9 @@ import { formatDate, formatDay, formatHours, todayYmd } from '../lib/format'
 
 const FIELD_ORDER = ['deadline', 'estimatedHours']
 
-function validate(values) {
+function validate(values, eventDate) {
   const errors = {}
-  const deadlineError = validateNewDeadline(values.deadline)
+  const deadlineError = validateNewDeadline(values.deadline, eventDate)
   if (deadlineError) errors.deadline = deadlineError
   const hoursError = validateEstimatedHours(values.estimatedHours)
   if (hoursError) errors.estimatedHours = hoursError
@@ -25,7 +25,8 @@ function failureMessage(err) {
 // Reprogramar una gestión (US-06) dentro de su misma fila: nueva fecha objetivo
 // y, si hace falta, nuevas horas estimadas. Si ese día pasa del límite diario,
 // no se guarda: se muestra el conflicto con opciones para resolverlo (US-07).
-// Si algo falla se mantienen los valores elegidos.
+// Si algo falla se mantienen los valores elegidos. La nueva fecha va de hoy a
+// la fecha del evento (`subtask.eventDate`).
 export default function RescheduleForm({ idPrefix, subtask, onSubmit, onCancel }) {
   const [values, setValues] = useState({
     deadline: subtask.deadline.slice(0, 10),
@@ -55,7 +56,7 @@ export default function RescheduleForm({ idPrefix, subtask, onSubmit, onCancel }
     const next = { ...values, [field]: value }
     setValues(next)
     setConflict(null) // el conflicto era de la fecha y las horas anteriores
-    if (submitted) setErrors(validate(next))
+    if (submitted) setErrors(validate(next, subtask.eventDate))
   }
 
   // `changes`: { deadline, estimatedHours }
@@ -82,7 +83,7 @@ export default function RescheduleForm({ idPrefix, subtask, onSubmit, onCancel }
     e.preventDefault()
     setSubmitted(true)
 
-    const errs = validate(values)
+    const errs = validate(values, subtask.eventDate)
     setErrors(errs)
     if (Object.keys(errs).length) {
       focusFirstError(errs)
@@ -125,10 +126,12 @@ export default function RescheduleForm({ idPrefix, subtask, onSubmit, onCancel }
       )}
       <div className="reschedule-form__fields">
         <Field id={`${idPrefix}-deadline`} label="Nueva fecha objetivo" required error={errors.deadline}
-          hint={`Fecha actual: ${formatDate(subtask.deadline)}`}>
+          hint={`Fecha actual: ${formatDate(subtask.deadline)}${
+            subtask.eventDate ? ` · Fecha del evento: ${formatDate(subtask.eventDate)}` : ''
+          }`}>
           {(p) => (
-            <input {...p} name="deadline" type="date" min={todayYmd()} value={values.deadline}
-              onChange={(e) => update('deadline', e.target.value)} autoFocus />
+            <input {...p} name="deadline" type="date" min={todayYmd()} max={subtask.eventDate?.slice(0, 10)}
+              value={values.deadline} onChange={(e) => update('deadline', e.target.value)} autoFocus />
           )}
         </Field>
         <Field id={`${idPrefix}-hours`} label="Horas estimadas" required error={errors.estimatedHours}
@@ -181,7 +184,9 @@ export default function RescheduleForm({ idPrefix, subtask, onSubmit, onCancel }
               <span>
                 {conflict.nextFreeDate
                   ? `Pasarla al ${formatDay(conflict.nextFreeDate)}, el primer día con espacio.`
-                  : `Esta gestión sola pasa de tu límite de ${formatHours(conflict.limit)}; reduce sus horas.`}
+                  : conflict.hours > conflict.limit
+                    ? `Esta gestión sola pasa de tu límite de ${formatHours(conflict.limit)}; reduce sus horas.`
+                    : 'No queda ningún día con espacio hasta la fecha del evento.'}
               </span>
             </button>
           </div>

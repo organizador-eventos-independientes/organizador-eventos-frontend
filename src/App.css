@@ -1256,7 +1256,7 @@
 }
 
 /* ---------- Filas de la vista Hoy ----------
-   Cada fila (evento o gestión) es una rejilla: la etiqueta va en la esquina
+   Cada fila (una gestión) es una rejilla: la etiqueta va en la esquina
    superior derecha y el nombre, el detalle y los botones quedan pegados a la
    izquierda, uno debajo de otro, en la misma línea vertical en toda la lista.
    Como habrá varios botones por fila (hasta 4), van en su propia línea para
@@ -1272,20 +1272,31 @@
   gap: 4px 16px;
 }
 
+/* La etiqueta lleva el nombre del evento con el color de su tipo. Tiene un
+   ancho máximo para que un nombre largo no le quite sitio al de la gestión. */
 .today-item__type {
   grid-area: type;
   justify-self: end;
   /* Arriba, a la altura de la primera línea del nombre aunque este ocupe dos. */
   align-self: start;
-  max-width: 100%;
+  max-width: min(14rem, 40vw);
   margin: 1px 0 0;
   padding: 6px 10px 6px 8px;
   white-space: nowrap;
 }
 
-/* Las gestiones llevan una etiqueta neutra para distinguirlas de los eventos. */
-.badge--gestion {
-  --badge-c: var(--text-muted);
+.today-item__type::before {
+  flex-shrink: 0;
+}
+
+/* Un nombre que no cabe se corta con puntos suspensivos. El relleno vertical
+   (compensado con el margen) evita que el recorte se coma las tildes y la Ñ,
+   que sobresalen de la altura de las mayúsculas. */
+.today-item__type .cap-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-block: 0.3em;
+  margin-block: -0.3em;
 }
 
 /* Líneas de 24px (1,5 × 16px): la etiqueta (22px, 1px abajo) queda centrada
@@ -1310,8 +1321,8 @@
   margin-top: 8px;
 }
 
-/* Botones de la fila: todos del mismo alto; un texto largo (el nombre del
-   evento en las gestiones) se corta con puntos suspensivos. */
+/* Botones de la fila: todos del mismo alto; un texto largo se corta con
+   puntos suspensivos. */
 .today-item__actions .btn {
   display: inline-block;
   height: 34px;

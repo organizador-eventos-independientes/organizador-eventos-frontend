@@ -1,6 +1,5 @@
-// Regla de la vista "Hoy" (US-04). Agrupa los eventos y sus gestiones por su
-// fecha respecto a hoy y los ordena dentro de cada grupo. Los eventos entran
-// con horas estimadas 0: el mismo día aparecen antes que sus gestiones.
+// Regla de la vista "Hoy" (US-04). Agrupa las gestiones por su fecha respecto
+// a hoy y las ordena dentro de cada grupo.
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -45,13 +44,4 @@ export function relativeDeadline(daysLeft) {
   if (daysLeft === 0) return 'Vence hoy'
   if (daysLeft === 1) return 'Vence mañana'
   return `Vence en ${daysLeft} días`
-}
-
-// Igual que relativeDeadline, pero para la fecha de un evento.
-export function relativeEventDate(daysLeft) {
-  if (daysLeft < -1) return `Fue hace ${-daysLeft} días`
-  if (daysLeft === -1) return 'Fue ayer'
-  if (daysLeft === 0) return 'Es hoy'
-  if (daysLeft === 1) return 'Es mañana'
-  return `En ${daysLeft} días`
 }

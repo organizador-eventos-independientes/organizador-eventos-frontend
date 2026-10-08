@@ -9,7 +9,7 @@ const byDeadline = (a, b) => a.deadline.localeCompare(b.deadline)
 
 // Bloque de gestiones logísticas dentro del detalle del evento. Crear, editar
 // y eliminar ocurren aquí mismo, sin navegar a otra ruta.
-export default function SubtaskSection({ eventId, subtasks, onChange }) {
+export default function SubtaskSection({ eventId, eventDate, subtasks, onChange }) {
   const { toast } = useToast()
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState(null)
@@ -60,6 +60,7 @@ export default function SubtaskSection({ eventId, subtasks, onChange }) {
           <h3 className="subtask-new__title">Nueva gestión</h3>
           <SubtaskForm
             idPrefix="new-subtask"
+            eventDate={eventDate}
             submitLabel="Agregar gestión"
             resetOnSuccess
             onSubmit={handleCreate}
@@ -87,6 +88,7 @@ export default function SubtaskSection({ eventId, subtasks, onChange }) {
                 <SubtaskForm
                   idPrefix={`edit-${s.id}`}
                   initialSubtask={s}
+                  eventDate={eventDate}
                   submitLabel="Guardar cambios"
                   onSubmit={(data) => handleUpdate(s.id, data)}
                   onCancel={() => setEditingId(null)}
