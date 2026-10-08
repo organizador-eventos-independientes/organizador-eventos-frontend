@@ -9,15 +9,20 @@ import { useToast } from '../lib/toast'
 export default function SettingsPage() {
   const { toast } = useToast()
   const [limit, setLimit] = useState(null) // { hours, isDefault }
-  const [error, setError] = useState(false)
+  const [error, setError] = useState('')
 
   const load = useCallback(async () => {
-    setError(false)
+    setError('')
     setLimit(null)
     try {
       setLimit(await getDailyLimit())
-    } catch {
-      setError(true)
+    } catch (err) {
+      // status 0: no hubo respuesta (sin conexión); otro: falló el servidor.
+      setError(
+        err?.status
+          ? 'No pudimos cargar tu configuración porque el servidor tuvo un problema. Inténtalo de nuevo en unos minutos.'
+          : 'No pudimos cargar tu configuración. Revisa tu conexión e inténtalo de nuevo.',
+      )
     }
   }, [])
 
@@ -42,7 +47,7 @@ export default function SettingsPage() {
 
       {error ? (
         <div className="alert alert--error alert--block" role="alert">
-          <p>No pudimos cargar tu configuración. Revisa tu conexión e inténtalo de nuevo.</p>
+          <p>{error}</p>
           <button type="button" className="btn btn--ghost" onClick={load}>Reintentar</button>
         </div>
       ) : limit === null ? (

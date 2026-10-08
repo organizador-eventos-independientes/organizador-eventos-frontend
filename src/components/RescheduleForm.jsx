@@ -6,6 +6,8 @@ import { formatDate, formatDay, formatHours, todayYmd } from '../lib/format'
 function failureMessage(err) {
   if (err?.status === 400) return 'No se pudo reprogramar.'
   if (err?.status === 404) return 'No se pudo reprogramar. Esta gestión ya no existe; recarga la página.'
+  // status 0: no hubo respuesta (sin conexión); otro: falló el servidor.
+  if (err?.status) return 'No se pudo reprogramar porque el servidor tuvo un problema. Inténtalo de nuevo en unos minutos.'
   return 'No se pudo reprogramar. Revisa tu conexión e inténtalo de nuevo.'
 }
 

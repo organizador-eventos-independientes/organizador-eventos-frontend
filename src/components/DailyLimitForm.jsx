@@ -34,7 +34,9 @@ export default function DailyLimitForm({ idPrefix, limit, onSave, description })
       setFormError(
         apiError?.status === 400
           ? 'No se pudo guardar el límite.'
-          : 'No se pudo guardar el límite. Revisa tu conexión e inténtalo de nuevo.',
+          : apiError?.status
+            ? 'No se pudo guardar el límite porque el servidor tuvo un problema. Inténtalo de nuevo en unos minutos.'
+            : 'No se pudo guardar el límite. Revisa tu conexión e inténtalo de nuevo.',
       )
     } finally {
       setBusy(false)
