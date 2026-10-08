@@ -76,7 +76,7 @@ export default function TodayPage() {
       // sigue aplicando al reprogramar.
       const [{ events, subtasks }, dailyLimit] = await Promise.all([
         listEventsWithSubtasks(),
-        getDailyLimit().catch(() => null),
+        getDailyLimit().then((limit) => limit.hours).catch(() => null),
       ])
       setData({ events, items: toItems(events, subtasks), dailyLimit })
     } catch {
@@ -133,9 +133,9 @@ export default function TodayPage() {
   }
 
   async function saveDailyLimit(hours) {
-    const dailyLimit = await updateDailyLimit(hours)
+    const { hours: dailyLimit } = await updateDailyLimit(hours)
     setData((d) => ({ ...d, dailyLimit }))
-    toast({ message: 'Límite diario actualizado.' })
+    toast({ message: 'Límite actualizado.' })
   }
 
   // Filtros (US-05). Viven en la URL para conservarse al recargar la página; un
@@ -267,7 +267,8 @@ export default function TodayPage() {
             <div id="limit-panel" className={`filters__panel${openPanel === 'limit' ? ' filters__panel--open' : ''}`}
               role="region" aria-labelledby="limit-toggle" inert={openPanel !== 'limit'}>
               <div className="filters__panel-inner">
-                <DailyLimitForm limit={data.dailyLimit} onSave={saveDailyLimit} />
+                <DailyLimitForm idPrefix="today" limit={data.dailyLimit} onSave={saveDailyLimit}
+                  description="Sumamos las horas de las gestiones de todos tus eventos. Si al reprogramar una gestión un día pasa de este límite, te avisamos antes de guardar." />
               </div>
             </div>
 

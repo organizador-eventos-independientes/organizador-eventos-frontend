@@ -5,9 +5,9 @@ import { logout } from '../api/auth'
 import { setSession, useSession } from '../lib/session'
 
 // Barra superior: logo, título y módulos a la izquierda; cambio de tema y
-// usuario a la derecha (módulos y usuario solo con sesión iniciada). "Cerrar
-// sesión" aparece al pasar el cursor sobre el usuario, o al enfocarlo con
-// teclado o tocarlo en pantallas táctiles.
+// usuario a la derecha (módulos y usuario solo con sesión iniciada).
+// "Configuración" y "Cerrar sesión" aparecen al pasar el cursor sobre el
+// usuario, o al enfocarlo con teclado o tocarlo en pantallas táctiles.
 export default function TopBar() {
   const session = useSession()
   const navigate = useNavigate()
@@ -45,9 +45,15 @@ export default function TopBar() {
               <span className="user-menu__caret" aria-hidden="true">▾</span>
             </button>
             <div className="user-menu__panel">
-              <button type="button" className="user-menu__item" onClick={handleLogout}>
-                Cerrar sesión
-              </button>
+              <div className="user-menu__box">
+                {/* Al navegar se suelta el foco para que el menú se cierre. */}
+                <Link to="/configuracion" className="user-menu__item" onClick={(e) => e.currentTarget.blur()}>
+                  Configuración
+                </Link>
+                <button type="button" className="user-menu__item user-menu__item--danger" onClick={handleLogout}>
+                  Cerrar sesión
+                </button>
+              </div>
             </div>
           </div>
         )}

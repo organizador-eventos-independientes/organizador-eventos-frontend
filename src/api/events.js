@@ -147,16 +147,18 @@ export const rescheduleSubtask = async (subtaskId, { deadline, estimatedHours })
   }
 }
 
-// Límite diario de horas de gestión del organizador (US-12).
-export const getDailyLimit = async () => {
-  const data = await send('/configuracion/')
-  return Number(data.limite_horas_diarias)
+// Límite diario de horas de gestión del organizador (US-12). `isDefault`: nunca
+// lo guardó y vale 6 h.
+function dailyLimitToFrontend(data) {
+  return { hours: Number(data.limite_horas_diarias), isDefault: Boolean(data.por_defecto) }
 }
 
-export const updateDailyLimit = async (hours) => {
-  const data = await send('/configuracion/', {
-    method: 'PATCH',
-    body: { limite_horas_diarias: hours },
-  })
-  return Number(data.limite_horas_diarias)
-}
+export const getDailyLimit = async () => dailyLimitToFrontend(await send('/configuracion/'))
+
+export const updateDailyLimit = async (hours) =>
+  dailyLimitToFrontend(
+    await send('/configuracion/', {
+      method: 'PATCH',
+      body: { limite_horas_diarias: hours },
+    }),
+  )

@@ -75,13 +75,17 @@ export function validateNewDeadline(deadline) {
   return ''
 }
 
-// Límite diario de horas de gestión (US-12). Devuelve el mensaje de error o ''.
+// Límite diario de horas de gestión (US-12): entre 1 y 16 h, ambos incluidos.
+export const DAILY_LIMIT_MIN = 1
+export const DAILY_LIMIT_MAX = 16
+const DAILY_LIMIT_RANGE = `El límite debe estar entre ${DAILY_LIMIT_MIN} y ${DAILY_LIMIT_MAX} horas.`
+
+// Devuelve el mensaje de error o '' si el límite es válido.
 export function validateDailyLimit(value) {
   const hours = Number(value)
   if (isBlank(value)) return 'Indica tu límite diario de horas.'
-  if (!Number.isFinite(hours)) return 'El límite debe ser un número (ej. 6 o 6.5).'
-  if (hours <= 0) return 'El límite diario debe ser mayor que 0.'
-  if (hours > 24) return 'El límite diario no puede superar 24 horas.'
+  if (!Number.isFinite(hours)) return `El límite debe ser un número. ${DAILY_LIMIT_RANGE}`
+  if (hours < DAILY_LIMIT_MIN || hours > DAILY_LIMIT_MAX) return DAILY_LIMIT_RANGE
   if (!/^\d+(\.\d{1,2})?$/.test(String(value).trim())) return 'Usa máximo 2 decimales (ej. 6.5).'
   return ''
 }

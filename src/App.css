@@ -269,24 +269,46 @@
     visibility 0s;
 }
 
-.user-menu__item {
-  display: block;
-  min-width: 160px;
-  padding: 10px 14px;
+/* Caja del menú: "Configuración" (US-12) y "Cerrar sesión", una debajo de otra. */
+.user-menu__box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 180px;
+  padding: 4px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--surface);
   box-shadow: var(--shadow-pop);
-  color: var(--danger);
+}
+
+.user-menu__item {
+  display: block;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-h);
   font: inherit;
   font-weight: 600;
   text-align: left;
+  text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
   transition: background-color var(--dur-fast) ease;
 }
 
 .user-menu__item:hover {
+  background: var(--accent-bg);
+  color: var(--text-h);
+}
+
+.user-menu__item--danger,
+.user-menu__item--danger:hover {
+  color: var(--danger);
+}
+
+.user-menu__item--danger:hover {
   background: color-mix(in srgb, var(--danger) 10%, var(--surface));
 }
 
@@ -1590,17 +1612,25 @@
   color: var(--accent-text);
 }
 
-/* Formulario del límite diario (US-12) dentro de su panel. */
+/* Formulario del límite diario (US-12): en Configuración y en el panel de Hoy. */
 .limit-form {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-block: 14px 4px;
   font-size: 0.95rem;
+}
+
+.filters .limit-form {
+  margin-block: 14px 4px;
 }
 
 .limit-form .field {
   max-width: 220px;
+}
+
+.limit-current strong {
+  color: var(--accent-text);
+  font-size: 1.1rem;
 }
 
 /* Texto de "¿Cómo se ordena esto?" dentro de su panel. */
