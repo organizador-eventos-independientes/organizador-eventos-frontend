@@ -112,7 +112,7 @@ export default function TodayPage() {
   }
 
   // Si falla o hay conflicto de sobrecarga (US-07), el error llega al
-  // formulario, que conserva la fecha elegida.
+  // formulario, que conserva la fecha y las horas elegidas.
   async function reschedule(item, changes) {
     const updated = await rescheduleSubtask(item.id, changes)
     setData((d) => ({
@@ -124,11 +124,16 @@ export default function TodayPage() {
     setReschedulingKey(null)
     setMovedKey(item.key)
     focusAfterRender.current = item.key
+
+    const dateChanged = updated.deadline !== item.deadline
+    const hours = formatHours(updated.estimatedHours)
     toast({
       message:
-        changes.estimatedHours != null
-          ? `Fecha actualizada y horas reducidas a ${formatHours(updated.estimatedHours)}.`
-          : 'Fecha actualizada.',
+        Number(updated.estimatedHours) === Number(item.estimatedHours)
+          ? 'Fecha actualizada.'
+          : dateChanged
+            ? `Fecha actualizada. Horas estimadas: ${hours}.`
+            : `Horas estimadas actualizadas: ${hours}.`,
     })
   }
 

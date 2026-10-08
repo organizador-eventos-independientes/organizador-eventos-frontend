@@ -55,15 +55,22 @@ export function validateSubtask(data, original) {
   else if (data.deadline.slice(0, 10) < todayYmd() && data.deadline !== original?.deadline?.slice(0, 10))
     errors.deadline = 'El plazo no puede ser una fecha anterior a hoy.'
 
-  const hours = Number(data.estimatedHours)
-  if (isBlank(data.estimatedHours)) errors.estimatedHours = 'Indica las horas estimadas.'
-  else if (!Number.isFinite(hours)) errors.estimatedHours = 'Las horas deben ser un número (ej. 4 o 1.5).'
-  else if (hours <= 0) errors.estimatedHours = 'Las horas deben ser mayores que 0.'
-  else if (hours > 1000) errors.estimatedHours = 'Las horas no pueden superar 1000.'
-  else if (!/^\d+(\.\d{1,2})?$/.test(String(data.estimatedHours).trim()))
-    errors.estimatedHours = 'Usa máximo 2 decimales (ej. 1.5).'
+  const hoursError = validateEstimatedHours(data.estimatedHours)
+  if (hoursError) errors.estimatedHours = hoursError
 
   return errors
+}
+
+// Horas estimadas de una gestión (al crearla, editarla o reprogramarla).
+// Devuelve el mensaje de error o '' si son válidas.
+export function validateEstimatedHours(value) {
+  const hours = Number(value)
+  if (isBlank(value)) return 'Indica las horas estimadas.'
+  if (!Number.isFinite(hours)) return 'Las horas deben ser un número (ej. 4 o 1.5).'
+  if (hours <= 0) return 'Las horas deben ser mayores que 0.'
+  if (hours > 999.99) return 'Las horas no pueden superar 999.99.'
+  if (!/^\d+(\.\d{1,2})?$/.test(String(value).trim())) return 'Usa máximo 2 decimales (ej. 1.5).'
+  return ''
 }
 
 // Reprogramar (US-06). Devuelve el mensaje de error o '' si la fecha es válida.

@@ -1367,8 +1367,12 @@
   margin-top: 8px;
 }
 
-.reschedule-form .field {
-  max-width: 260px;
+/* Fecha y horas lado a lado; en pantallas angostas, una debajo de otra. */
+.reschedule-form__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 220px));
+  gap: 12px 16px;
+  align-items: start;
 }
 
 .reschedule-form__actions {
