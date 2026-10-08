@@ -41,7 +41,20 @@ export default function EventListPage() {
           <button type="button" className="btn btn--ghost" onClick={load}>Reintentar</button>
         </div>
       ) : events === null ? (
-        <p className="loading" role="status">Cargando eventos…</p>
+        // Mientras llegan, tarjetas de espera con la misma forma que las reales.
+        <div role="status">
+          <span className="sr-only">Cargando eventos…</span>
+          <ul className="event-list event-list--loading" aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <li key={i} className="event-skeleton">
+                <span className="skeleton skeleton--badge" />
+                <span className="skeleton skeleton--title" />
+                <span className="skeleton" />
+                <span className="skeleton skeleton--short" />
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : events.length === 0 ? (
         <div className="empty card">
           <p className="empty__title">Aún no tienes eventos</p>

@@ -3,7 +3,7 @@ import { ToastContext } from '../lib/toast'
 
 const DURATION_MS = { success: 4000, error: 8000 }
 // Lo que dura la animación de salida (.toast--leaving en App.css).
-const EXIT_MS = 220
+const EXIT_MS = 200
 
 export default function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([])

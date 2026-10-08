@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import Logo from './Logo'
 import ThemeToggle from './ThemeToggle'
@@ -8,9 +9,22 @@ import { setSession, useSession } from '../lib/session'
 // usuario a la derecha (módulos y usuario solo con sesión iniciada).
 // "Configuración" y "Cerrar sesión" aparecen al pasar el cursor sobre el
 // usuario, o al enfocarlo con teclado o tocarlo en pantallas táctiles.
+// La barra queda fija arriba al desplazar la página (App.css).
 export default function TopBar() {
   const session = useSession()
   const navigate = useNavigate()
+  const barRef = useRef(null)
+
+  // Su alto (cambia si baja a una segunda línea) se publica en --topbar-h para
+  // que al desplazar la página hasta un elemento este no quede debajo de ella.
+  useEffect(() => {
+    const bar = barRef.current
+    const observer = new ResizeObserver(() => {
+      document.documentElement.style.setProperty('--topbar-h', `${bar.offsetHeight}px`)
+    })
+    observer.observe(bar)
+    return () => observer.disconnect()
+  }, [])
 
   function handleLogout() {
     // logout() toma el token al llamarse; la sesión local se cierra sin esperar
@@ -21,12 +35,11 @@ export default function TopBar() {
   }
 
   return (
-    <header className="topbar">
+    <header ref={barRef} className="topbar">
       <div className="topbar__start">
         <Link to="/eventos" className="topbar__brand">
           <Logo variant="barra" />
-          <span className="brand-name">Slap Slap</span>
-          <span className="brand-name">/ organizador de eventos</span>
+          <span className="brand-name">Slap Slap / organizador de eventos</span>
         </Link>
         {session && (
           <nav className="topbar__nav" aria-label="Principal">

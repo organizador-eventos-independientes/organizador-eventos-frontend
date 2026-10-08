@@ -2,7 +2,12 @@
    en la GPU) para que vayan fluidas; los keyframes están al final del archivo. */
 
 /* ---------- Layout ---------- */
+/* La barra superior queda fija arriba al desplazar la página, por encima del
+   contenido (los avisos y los diálogos van aún más arriba). */
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -51,13 +56,14 @@
 }
 
 .theme-toggle:active {
-  transform: scale(0.9);
+  transform: scale(0.96);
 }
 
-/* El icono entra girando cada vez que cambia (ThemeToggle le da un key nuevo). */
+/* El icono entra con un giro corto cada vez que cambia (ThemeToggle le da un
+   key nuevo). */
 .theme-toggle__icon {
   display: grid;
-  animation: icon-spin-in var(--dur-slow) var(--ease-spring);
+  animation: icon-in var(--dur) var(--ease-out);
 }
 
 .topbar__brand {
@@ -71,10 +77,6 @@
 
 .topbar__brand:hover {
   color: var(--text-h);
-}
-
-.topbar__brand:hover .logo--barra {
-  animation: logo-wiggle 0.6s var(--ease-out);
 }
 
 /* ---------- Logo (componente Logo) ----------
@@ -100,16 +102,12 @@
 .logo--barra {
   width: 54px;
   height: 38px;
-  transform-origin: 50% 80%;
 }
 
 .logo--inicio {
   width: 220px;
   height: 156px;
   margin: 0 auto;
-  animation:
-    pop-in 0.6s var(--ease-spring) backwards,
-    logo-float 4s ease-in-out 0.6s infinite;
 }
 
 /* Nombre de la marca: la misma letra que el resto de la app, en mayúsculas y espaciada. */
@@ -144,8 +142,7 @@
   gap: 4px;
 }
 
-/* Raya morada bajo el enlace: crece desde el centro al pasar el cursor y se
-   queda completa en el módulo activo. */
+/* Raya morada bajo el módulo activo: crece desde el centro al entrar en él. */
 .topbar__link {
   position: relative;
   padding: 6px 12px;
@@ -172,10 +169,6 @@
 .topbar__link:hover {
   background: var(--accent-bg);
   color: var(--text-h);
-}
-
-.topbar__link:hover::after {
-  transform: scaleX(0.5);
 }
 
 .topbar__link.active {
@@ -250,12 +243,11 @@
   padding-top: 6px;
   visibility: hidden;
   opacity: 0;
-  transform: translateY(-6px) scale(0.96);
-  transform-origin: top right;
+  transform: translateY(-4px);
   transition:
-    opacity var(--dur-fast) ease,
-    transform var(--dur) var(--ease-out),
-    visibility 0s linear var(--dur);
+    opacity var(--dur-fast) var(--ease-in),
+    transform var(--dur-fast) var(--ease-in),
+    visibility 0s linear var(--dur-fast);
 }
 
 .user-menu:hover .user-menu__panel,
@@ -264,8 +256,8 @@
   opacity: 1;
   transform: none;
   transition:
-    opacity var(--dur-fast) ease,
-    transform var(--dur) var(--ease-spring),
+    opacity var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out),
     visibility 0s;
 }
 
@@ -312,6 +304,12 @@
   background: color-mix(in srgb, var(--danger) 10%, var(--surface));
 }
 
+/* Al desplazar la página hasta un elemento (p. ej. una gestión reprogramada)
+   se deja libre el alto de la barra fija, que TopBar publica en --topbar-h. */
+html {
+  scroll-padding-top: calc(var(--topbar-h, 68px) + 16px);
+}
+
 .main {
   padding: 32px 16px 64px;
 }
@@ -327,7 +325,7 @@
 
 .page > * {
   animation: rise-in var(--dur-slow) var(--ease-out) backwards;
-  animation-delay: calc(var(--stagger, 0) * 60ms);
+  animation-delay: calc(var(--stagger, 0) * 30ms);
 }
 
 .page > :nth-child(2) { --stagger: 1; }
@@ -367,6 +365,19 @@
 
 .muted {
   color: var(--text-muted);
+}
+
+/* Texto solo para lectores de pantalla. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* Texto de carga con un aro morado girando delante. */
@@ -420,8 +431,8 @@
 }
 
 /* ---------- Buttons ----------
-   Al pasar el cursor el botón sube un poco y al pulsarlo se hunde; el primario
-   además brilla en morado y lo cruza un destello. */
+   Al pasar el cursor el botón solo cambia de color (el primario además brilla
+   suave en morado) y al pulsarlo se encoge un poco. */
 .btn {
   position: relative;
   isolation: isolate;
@@ -439,20 +450,15 @@
   cursor: pointer;
   white-space: nowrap;
   transition:
-    background-color var(--dur) var(--ease-out),
-    border-color var(--dur) var(--ease-out),
-    color var(--dur) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
     box-shadow var(--dur) var(--ease-out),
-    transform var(--dur) var(--ease-out);
-}
-
-.btn:hover:not(:disabled) {
-  transform: translateY(-2px);
+    transform var(--dur-fast) var(--ease-out);
 }
 
 .btn:active:not(:disabled) {
-  transform: translateY(0) scale(0.97);
-  transition-duration: 60ms;
+  transform: scale(0.98);
 }
 
 .btn:disabled {
@@ -474,20 +480,6 @@
   background: var(--accent-hover);
   color: var(--on-accent);
   box-shadow: var(--glow);
-}
-
-.btn--primary::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 70%);
-  transform: translateX(-110%);
-}
-
-.btn--primary:hover:not(:disabled)::after {
-  transform: translateX(110%);
-  transition: transform 0.7s var(--ease-out);
 }
 
 .btn--ghost {
@@ -617,11 +609,11 @@
   box-shadow: var(--focus);
 }
 
-/* Al aparecer un error, el campo tiembla una vez para señalarlo. */
+/* Un campo con error se marca con el borde rojo; el mensaje aparece debajo
+   con un fundido. */
 .field--invalid input,
 .field--invalid select {
   border-color: var(--danger);
-  animation: shake 0.4s var(--ease-out);
 }
 
 .field__hint {
@@ -706,7 +698,7 @@
   position: relative;
   isolation: isolate;
   animation: rise-in var(--dur-slow) var(--ease-out) backwards;
-  animation-delay: calc(var(--stagger, 0) * 50ms + 120ms);
+  animation-delay: calc(var(--stagger, 0) * 30ms + 60ms);
 }
 
 .event-list > li::before {
@@ -747,12 +739,12 @@
 .event-card:focus-visible {
   color: inherit;
   border-color: var(--accent);
-  transform: translate(5px, -5px);
+  transform: translate(4px, -4px);
 }
 
 .event-card:active {
   transform: translate(2px, -2px);
-  transition-duration: 60ms;
+  transition-duration: var(--dur-fast);
 }
 
 .event-card__name {
@@ -768,6 +760,48 @@
 
 .event-card__meta {
   font-size: 0.9rem;
+}
+
+/* Mientras cargan los eventos: tarjetas de espera con la forma de las reales y
+   un pulso suave (sin el bloque morado de hover). */
+.event-list--loading > li::before {
+  display: none;
+}
+
+.event-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 150px;
+  padding: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.skeleton {
+  display: block;
+  width: 80%;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.skeleton--badge {
+  width: 76px;
+  height: 22px;
+  border-radius: 999px;
+}
+
+.skeleton--title {
+  width: 65%;
+  height: 18px;
+}
+
+.skeleton--short {
+  width: 50%;
 }
 
 /* ---------- Badges ---------- */
@@ -836,32 +870,17 @@
   line-height: 1.2;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  transform-origin: bottom left;
-  transition: transform var(--dur) var(--ease-spring), box-shadow var(--dur) var(--ease-out);
-  animation: tab-in 0.55s var(--ease-spring) 0.1s backwards;
+  transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+  animation: rise-in var(--dur-slow) var(--ease-out) 60ms backwards;
 }
 
 .event-tab.badge--otro {
   color: var(--on-accent);
 }
 
-/* Destello que cruza la pestaña una vez al aparecer. */
-.event-tab::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.55) 50%, transparent 65%);
-  transform: translateX(-120%);
-  animation: tab-shine 0.9s var(--ease-out) 0.7s forwards;
-}
-
 .event-tab:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 -4px 14px color-mix(in srgb, var(--badge-c) 45%, transparent);
-}
-
-.event-tab:hover::after {
-  animation: tab-shine 0.7s var(--ease-out);
+  transform: translateY(-2px);
+  box-shadow: 0 -4px 12px color-mix(in srgb, var(--badge-c) 30%, transparent);
 }
 
 .event-head {
@@ -989,7 +1008,7 @@
   padding: 14px 0;
   border-bottom: 1px solid var(--border);
   animation: rise-in var(--dur-slow) var(--ease-out) backwards;
-  animation-delay: calc(var(--stagger, 0) * 40ms);
+  animation-delay: calc(var(--stagger, 0) * 30ms);
 }
 
 .subtasks__item::before {
@@ -1046,8 +1065,9 @@
 }
 
 /* ---------- Dialog ----------
-   Entra creciendo desde el centro con el fondo difuminado; al cerrarse hace lo
-   contrario (ConfirmDialog añade .dialog--closing y espera a que termine). */
+   Entra subiendo un poco y con el fondo difuminado; al cerrarse hace lo
+   contrario, más rápido (ConfirmDialog añade .dialog--closing y espera a que
+   termine). */
 .dialog {
   width: min(440px, calc(100vw - 32px));
   border: 1px solid var(--border);
@@ -1059,21 +1079,21 @@
 }
 
 .dialog[open] {
-  animation: dialog-in 0.32s var(--ease-spring);
+  animation: dialog-in var(--dur) var(--ease-out);
 }
 
 .dialog::backdrop {
   background: rgba(14, 14, 16, 0.55);
   backdrop-filter: blur(3px);
-  animation: fade-in var(--dur) ease;
+  animation: fade-in var(--dur) var(--ease-out);
 }
 
 .dialog.dialog--closing {
-  animation: dialog-out 0.18s ease-in forwards;
+  animation: dialog-out var(--dur-fast) var(--ease-in) forwards;
 }
 
 .dialog.dialog--closing::backdrop {
-  animation: fade-out 0.18s ease-in forwards;
+  animation: fade-out var(--dur-fast) var(--ease-in) forwards;
 }
 
 .dialog__title {
@@ -1103,8 +1123,8 @@
 }
 
 /* ---------- Toasts ----------
-   Entran desde la derecha con rebote, una barra inferior marca el tiempo que
-   les queda y salen deslizándose (ToastProvider añade .toast--leaving). */
+   Entran subiendo un poco, una barra inferior marca el tiempo que les queda y
+   salen con un fundido (ToastProvider añade .toast--leaving). */
 .toasts {
   position: fixed;
   right: 16px;
@@ -1129,7 +1149,7 @@
   border: 1px solid var(--border);
   border-left: 4px solid var(--toast-c);
   box-shadow: var(--shadow-pop);
-  animation: toast-in 0.45s var(--ease-spring);
+  animation: toast-in var(--dur-slow) var(--ease-out);
 }
 
 .toast::after {
@@ -1150,7 +1170,7 @@
 }
 
 .toast--leaving {
-  animation: toast-out var(--dur) ease-in forwards;
+  animation: toast-out var(--dur) var(--ease-in) forwards;
 }
 
 .toast__icon {
@@ -1164,7 +1184,6 @@
   font-weight: 700;
   color: var(--on-status);
   background: var(--toast-c);
-  animation: pop-in 0.4s var(--ease-spring) 0.12s backwards;
 }
 
 .toast__msg {
@@ -1182,12 +1201,12 @@
   cursor: pointer;
   color: var(--text-muted);
   padding: 2px 4px;
-  transition: color var(--dur-fast) ease, transform var(--dur) var(--ease-out);
+  transition: color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
 }
 
 .toast__close:hover {
   color: var(--text-h);
-  transform: rotate(90deg);
+  background: var(--surface-2);
 }
 
 /* ---------- Vista Hoy ---------- */
@@ -1335,7 +1354,7 @@
 
 .today-group__count {
   color: var(--text-h);
-  animation: pop-in 0.4s var(--ease-spring) 0.2s backwards;
+  animation: pop-in var(--dur) var(--ease-out) 0.15s backwards;
 }
 
 .today-group--overdue .today-group__count,
@@ -1491,7 +1510,7 @@
   --moved-c: color-mix(in srgb, var(--accent) 20%, transparent);
   animation:
     rise-in var(--dur-slow) var(--ease-out) backwards,
-    moved-flash 1.8s var(--ease-out);
+    moved-flash 1.4s var(--ease-out);
   animation-delay: 0s;
 }
 
@@ -1541,7 +1560,7 @@
 }
 
 .filters__toggle:active {
-  transform: scale(0.96);
+  transform: scale(0.98);
 }
 
 .filters__toggle[aria-expanded='true'] {
@@ -1564,7 +1583,7 @@
   font-size: 0.75rem;
   font-weight: 700;
   line-height: 1;
-  animation: pop-in 0.35s var(--ease-spring);
+  animation: pop-in var(--dur) var(--ease-out);
 }
 
 .filters__caret {
@@ -1590,7 +1609,7 @@
   display: grid;
   grid-template-rows: 0fr;
   opacity: 0;
-  transition: grid-template-rows 0.32s var(--ease-out), opacity var(--dur) var(--ease-out);
+  transition: grid-template-rows var(--dur) var(--ease-out), opacity var(--dur) var(--ease-out);
 }
 
 .filters__panel--open {
@@ -1684,31 +1703,28 @@
   line-height: 1.2;
   cursor: pointer;
   transition:
-    background-color var(--dur) var(--ease-out),
-    border-color var(--dur) var(--ease-out),
-    color var(--dur) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
     box-shadow var(--dur) var(--ease-out),
-    transform var(--dur) var(--ease-out);
+    transform var(--dur-fast) var(--ease-out);
 }
 
 .chip[aria-pressed='false']:hover {
   background: var(--accent-bg);
   border-color: var(--accent);
-  transform: translateY(-1px);
 }
 
 .chip:active {
-  transform: scale(0.94);
-  transition-duration: 60ms;
+  transform: scale(0.98);
 }
 
-/* Al elegir un filtro, el chip da un pequeño salto. */
+/* Al elegir un filtro, el chip se rellena de morado. */
 .chip[aria-pressed='true'] {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--on-accent);
   font-weight: 600;
-  animation: chip-pop 0.35s var(--ease-spring);
 }
 
 .chip__count {
@@ -1774,7 +1790,7 @@
 }
 
 .password-input__toggle:active {
-  transform: translateY(-50%) scale(0.88);
+  transform: translateY(-50%) scale(0.94);
 }
 
 .auth-page__note {
@@ -1782,9 +1798,11 @@
   text-align: center;
 }
 
-/* ---------- Animaciones ---------- */
+/* ---------- Animaciones ----------
+   Todo entra con --ease-out (sin rebote) y sale con --ease-in. Lo que entra
+   sube 6px mientras aparece. */
 @keyframes rise-in {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
 }
 
@@ -1804,7 +1822,7 @@
 }
 
 @keyframes pop-in {
-  from { opacity: 0; transform: scale(0.6); }
+  from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: none; }
 }
 
@@ -1812,64 +1830,33 @@
   to { transform: rotate(360deg); }
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-5px); }
-  40% { transform: translateX(5px); }
-  60% { transform: translateX(-3px); }
-  80% { transform: translateX(3px); }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
 }
 
-@keyframes icon-spin-in {
-  from { opacity: 0; transform: rotate(-120deg) scale(0.4); }
+@keyframes icon-in {
+  from { opacity: 0; transform: rotate(-45deg) scale(0.85); }
   to { opacity: 1; transform: none; }
 }
 
-@keyframes logo-wiggle {
-  0%, 100% { transform: rotate(0); }
-  25% { transform: rotate(-8deg); }
-  50% { transform: rotate(6deg); }
-  75% { transform: rotate(-3deg); }
-}
-
-@keyframes logo-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-
-@keyframes chip-pop {
-  0% { transform: scale(0.94); }
-  60% { transform: scale(1.06); }
-  100% { transform: none; }
-}
-
 @keyframes dialog-in {
-  from { opacity: 0; transform: translateY(12px) scale(0.94); }
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
   to { opacity: 1; transform: none; }
 }
 
 @keyframes dialog-out {
   from { opacity: 1; transform: none; }
-  to { opacity: 0; transform: translateY(8px) scale(0.96); }
-}
-
-@keyframes tab-in {
-  from { opacity: 0; transform: translateY(14px) scale(0.85); }
-  to { opacity: 1; transform: none; }
-}
-
-@keyframes tab-shine {
-  from { transform: translateX(-120%); }
-  to { transform: translateX(120%); }
+  to { opacity: 0; transform: translateY(4px) scale(0.98); }
 }
 
 @keyframes toast-in {
-  from { opacity: 0; transform: translateX(40px) scale(0.96); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
 }
 
 @keyframes toast-out {
-  to { opacity: 0; transform: translateX(60px); }
+  to { opacity: 0; transform: translateY(4px); }
 }
 
 @keyframes toast-timer {
