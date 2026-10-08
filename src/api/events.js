@@ -116,3 +116,12 @@ export const updateSubtask = async (eventId, subtaskId, data) => {
 
 export const deleteSubtask = (eventId, subtaskId) =>
   send(`/subtareas/${subtaskId}/`, { method: 'DELETE' })
+
+// Reprogramar (US-06): solo cambia la fecha objetivo de la gestión.
+export const rescheduleSubtask = async (subtaskId, deadline) => {
+  const response = await send(`/subtareas/${subtaskId}/reprogramar/`, {
+    method: 'PATCH',
+    body: { plazo: deadline },
+  })
+  return subtaskToFrontend(response)
+}

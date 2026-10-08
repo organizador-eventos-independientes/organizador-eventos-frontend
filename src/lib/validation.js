@@ -65,3 +65,12 @@ export function validateSubtask(data, original) {
 
   return errors
 }
+
+// Reprogramar (US-06). Devuelve el mensaje de error o '' si la fecha es válida.
+// Una gestión vencida se puede mover, pero no a otra fecha ya pasada.
+export function validateNewDeadline(deadline) {
+  if (isBlank(deadline)) return 'Selecciona la nueva fecha objetivo.'
+  if (!isValidDate(deadline)) return 'La fecha no es válida.'
+  if (deadline.slice(0, 10) < todayYmd()) return 'La fecha objetivo no puede ser anterior a hoy.'
+  return ''
+}

@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { listEventsWithSubtasks } from '../api/events'
+import RescheduleForm from '../components/RescheduleForm'
+import { listEventsWithSubtasks, rescheduleSubtask } from '../api/events'
 import { groupSubtasks, relativeDeadline, relativeEventDate } from '../lib/today'
 import { formatDate, formatDateTime, formatHours, todayYmd } from '../lib/format'
+import { useToast } from '../lib/toast'
 import { eventTypeLabel } from '../lib/validation'
 
 // `status` es el valor del filtro por estado en la URL (?estado=...).
@@ -50,19 +52,27 @@ function toItems(events, subtasks) {
   return [...eventItems, ...subtaskItems]
 }
 
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
 export default function TodayPage() {
+  const { toast } = useToast()
   const [data, setData] = useState(null)
   const [error, setError] = useState(false)
   // Panel desplegado de la barra de filtros: 'filters', 'rule' o ninguno.
   const [openPanel, setOpenPanel] = useState(null)
   const [searchParams, setSearchParams] = useSearchParams()
+  // Reprogramar (US-06): gestión con el formulario abierto y la última movida.
+  const [reschedulingKey, setReschedulingKey] = useState(null)
+  const [movedKey, setMovedKey] = useState(null)
+  // Gestión cuyo botón "Reprogramar" recibe el foco tras el próximo render.
+  const focusAfterRender = useRef(null)
 
   const load = useCallback(async () => {
     setError(false)
     setData(null)
     try {
       const { events, subtasks } = await listEventsWithSubtasks()
-      setData({ events, groups: groupSubtasks(toItems(events, subtasks), todayYmd()) })
+      setData({ events, items: toItems(events, subtasks) })
     } catch {
       setError(true)
     }
@@ -72,6 +82,41 @@ export default function TodayPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial de datos
     load()
   }, [load])
+
+  // Al cerrar el formulario el foco vuelve a "Reprogramar". Si la gestión cambió
+  // de grupo, además se desplaza la página hasta ella para ver a dónde fue.
+  useEffect(() => {
+    const key = focusAfterRender.current
+    if (!key) return
+    focusAfterRender.current = null
+    const button = document.getElementById(`reprogramar-${key}`)
+    if (!button) return
+    button.focus({ preventScroll: true })
+    button.closest('li')?.scrollIntoView({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
+  })
+
+  function startRescheduling(item) {
+    setReschedulingKey(item.key)
+    setMovedKey(null)
+  }
+
+  function cancelRescheduling(item) {
+    setReschedulingKey(null)
+    focusAfterRender.current = item.key
+  }
+
+  // Si falla, el error llega al formulario, que conserva la fecha elegida.
+  async function reschedule(item, deadline) {
+    const updated = await rescheduleSubtask(item.id, deadline)
+    setData((d) => ({
+      ...d,
+      items: d.items.map((it) => (it.key === item.key ? { ...it, deadline: updated.deadline } : it)),
+    }))
+    setReschedulingKey(null)
+    setMovedKey(item.key)
+    focusAfterRender.current = item.key
+    toast({ message: 'Fecha actualizada.' })
+  }
 
   // Filtros (US-05). Viven en la URL para conservarse al recargar la página; un
   // valor que no corresponde a ningún evento o estado se ignora.
@@ -93,13 +138,16 @@ export default function TodayPage() {
   // Acordeón: abrir uno cierra el otro; volver a pulsarlo lo cierra.
   const togglePanel = (name) => setOpenPanel((open) => (open === name ? null : name))
 
+  // Se agrupa en cada render: una gestión reprogramada pasa sola a su nuevo grupo.
+  const groups = data ? groupSubtasks(data.items, todayYmd()) : null
+
   // Filtrar no reordena: cada grupo conserva la regla de prioridad.
   const ofEvent = (list) => (eventFilter === null ? list : list.filter((s) => s.eventId === eventFilter))
-  const totalCount = data ? GROUPS.reduce((n, g) => n + data.groups[g.key].length, 0) : 0
-  const shownGroups = data
+  const totalCount = groups ? GROUPS.reduce((n, g) => n + groups[g.key].length, 0) : 0
+  const shownGroups = groups
     ? GROUPS.filter((g) => !statusFilter || g.status === statusFilter).map((g) => ({
         ...g,
-        items: ofEvent(data.groups[g.key]),
+        items: ofEvent(groups[g.key]),
       }))
     : []
   const shownCount = shownGroups.reduce((n, g) => n + g.items.length, 0)
@@ -214,7 +262,7 @@ export default function TodayPage() {
                       {GROUPS.map((g) => (
                         <button key={g.key} type="button" className="chip" aria-pressed={statusFilter === g.status}
                           onClick={() => setFilter('estado', statusFilter === g.status ? null : g.status)}>
-                          <span className="cap-text">{g.label}</span> <span className="chip__count">{ofEvent(data.groups[g.key]).length}</span>
+                          <span className="cap-text">{g.label}</span> <span className="chip__count">{ofEvent(groups[g.key]).length}</span>
                         </button>
                       ))}
                     </div>
@@ -262,7 +310,9 @@ export default function TodayPage() {
                           </div>
                         </li>
                       ) : (
-                        <li key={s.key} className="subtasks__item today-item">
+                        <li key={s.key}
+                          className={`subtasks__item today-item${reschedulingKey === s.key ? ' today-item--rescheduling' : ''}${movedKey === s.key ? ' today-item--moved' : ''}`}
+                          onAnimationEnd={(e) => e.animationName === 'moved-flash' && setMovedKey(null)}>
                           <span className="badge badge--gestion today-item__type">
                             <span className="cap-text">Gestión</span>
                           </span>
@@ -272,11 +322,24 @@ export default function TodayPage() {
                             <span>{formatDate(s.deadline)}</span>
                             <span>{formatHours(s.estimatedHours)}</span>
                           </p>
-                          <div className="today-item__actions">
-                            <Link to={`/evento/${s.eventId}`} className="btn btn--small btn--ghost" title={s.eventName}>
-                              {s.eventName}
-                            </Link>
-                          </div>
+                          {reschedulingKey === s.key ? (
+                            <RescheduleForm
+                              idPrefix={s.key}
+                              subtask={s}
+                              onSubmit={(deadline) => reschedule(s, deadline)}
+                              onCancel={() => cancelRescheduling(s)}
+                            />
+                          ) : (
+                            <div className="today-item__actions">
+                              <Link to={`/evento/${s.eventId}`} className="btn btn--small btn--ghost" title={s.eventName}>
+                                {s.eventName}
+                              </Link>
+                              <button type="button" id={`reprogramar-${s.key}`} className="btn btn--small btn--ghost"
+                                onClick={() => startRescheduling(s)} aria-label={`Reprogramar gestión ${s.name}`}>
+                                Reprogramar
+                              </button>
+                            </div>
+                          )}
                         </li>
                       ),
                     )}

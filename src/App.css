@@ -1324,6 +1324,46 @@
   color: var(--group-c);
 }
 
+/* ---------- Reprogramar una gestión (US-06) ----------
+   La fecha se cambia en la misma fila, que se tiñe como al editar. Al guardar,
+   la gestión pasa a su nuevo grupo y se ilumina un momento para que se vea a
+   dónde fue. */
+.subtasks__item.today-item--rescheduling {
+  padding: 16px;
+  background: var(--accent-bg);
+}
+
+.today-item--rescheduling::before {
+  display: none;
+}
+
+.reschedule-form {
+  grid-area: actions;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.reschedule-form .field {
+  max-width: 260px;
+}
+
+.reschedule-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* El brillo sobresale 12px a cada lado (sombras) para no pegarse al texto. */
+.subtasks__item.today-item--moved {
+  --moved-c: color-mix(in srgb, var(--accent) 20%, transparent);
+  animation:
+    rise-in var(--dur-slow) var(--ease-out) backwards,
+    moved-flash 1.8s var(--ease-out);
+  animation-delay: 0s;
+}
+
 /* ---------- Filtros de la vista Hoy ----------
    Plegados por defecto: la barra muestra el botón, cuántos filtros hay activos
    y el resumen; las opciones se despliegan al pulsar el botón. La altura se
@@ -1675,4 +1715,11 @@
 @keyframes toast-timer {
   from { transform: scaleX(1); }
   to { transform: scaleX(0); }
+}
+
+@keyframes moved-flash {
+  from {
+    background-color: var(--moved-c);
+    box-shadow: -12px 0 0 var(--moved-c), 12px 0 0 var(--moved-c);
+  }
 }
