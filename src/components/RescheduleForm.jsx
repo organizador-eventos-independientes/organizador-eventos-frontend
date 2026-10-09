@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
+import DurationInput from './DurationInput'
 import Field from './Field'
-import { validateEstimatedHours, validateNewDeadline } from '../lib/validation'
-import { formatDate, formatDay, formatHours, todayYmd } from '../lib/format'
+import { validateDuration, validateNewDeadline } from '../lib/validation'
+import {
+  formatDate, formatDay, formatHours, parseDuration, toDurationText, toHours, todayYmd,
+} from '../lib/format'
 
 const FIELD_ORDER = ['deadline', 'estimatedHours']
 
@@ -9,7 +12,7 @@ function validate(values, eventDate) {
   const errors = {}
   const deadlineError = validateNewDeadline(values.deadline, eventDate)
   if (deadlineError) errors.deadline = deadlineError
-  const hoursError = validateEstimatedHours(values.estimatedHours)
+  const hoursError = validateDuration(values.estimatedHours)
   if (hoursError) errors.estimatedHours = hoursError
   return errors
 }
@@ -30,7 +33,7 @@ function failureMessage(err) {
 export default function RescheduleForm({ idPrefix, subtask, onSubmit, onCancel }) {
   const [values, setValues] = useState({
     deadline: subtask.deadline.slice(0, 10),
-    estimatedHours: String(Number(subtask.estimatedHours)),
+    estimatedHours: toDurationText(subtask.estimatedHours),
   })
   const [errors, setErrors] = useState({})
   const [submitted, setSubmitted] = useState(false)
@@ -89,7 +92,7 @@ export default function RescheduleForm({ idPrefix, subtask, onSubmit, onCancel }
       focusFirstError(errs)
       return
     }
-    save({ deadline: values.deadline, estimatedHours: Number(values.estimatedHours) })
+    save({ deadline: values.deadline, estimatedHours: toHours(parseDuration(values.estimatedHours)) })
   }
 
   function handleKeyDown(e) {
@@ -108,7 +111,7 @@ export default function RescheduleForm({ idPrefix, subtask, onSubmit, onCancel }
   }
 
   function reduceHours() {
-    setValues((v) => ({ ...v, estimatedHours: String(conflict.availableHours) }))
+    setValues((v) => ({ ...v, estimatedHours: toDurationText(conflict.availableHours) }))
     save({ deadline: conflict.date, estimatedHours: conflict.availableHours })
   }
 
@@ -126,9 +129,14 @@ export default function RescheduleForm({ idPrefix, subtask, onSubmit, onCancel }
       )}
       <div className="reschedule-form__fields">
         <Field id={`${idPrefix}-deadline`} label="Nueva fecha objetivo" required error={errors.deadline}
-          hint={`Fecha actual: ${formatDate(subtask.deadline)}${
-            subtask.eventDate ? ` · Fecha del evento: ${formatDate(subtask.eventDate)}` : ''
-          }`}>
+          hint={
+            <>
+              <span className="field__hint-line">Fecha actual: {formatDate(subtask.deadline)}</span>
+              {subtask.eventDate && (
+                <span className="field__hint-line">Fecha del evento: {formatDate(subtask.eventDate)}</span>
+              )}
+            </>
+          }>
           {(p) => (
             <input {...p} name="deadline" type="date" min={todayYmd()} max={subtask.eventDate?.slice(0, 10)}
               value={values.deadline} onChange={(e) => update('deadline', e.target.value)} autoFocus />
@@ -137,8 +145,8 @@ export default function RescheduleForm({ idPrefix, subtask, onSubmit, onCancel }
         <Field id={`${idPrefix}-hours`} label="Horas estimadas" required error={errors.estimatedHours}
           hint={`Horas actuales: ${formatHours(subtask.estimatedHours)}`}>
           {(p) => (
-            <input {...p} name="estimatedHours" type="number" inputMode="decimal" min="0.25" step="0.25"
-              value={values.estimatedHours} onChange={(e) => update('estimatedHours', e.target.value)} />
+            <DurationInput fieldProps={p} value={values.estimatedHours}
+              onChange={(value) => update('estimatedHours', value)} />
           )}
         </Field>
       </div>

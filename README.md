@@ -3,7 +3,7 @@
 React 19 + Vite + React Router. Implementa:
 
 - **US-01** Crear evento (`/eventos/nuevo`): formulario controlado con validación en cliente, mensajes junto a cada campo, toast de éxito y redirección al detalle.
-- **US-02** Gestiones logísticas: se crean, listan, editan y eliminan de forma inline dentro de `/evento/:id` (sin rutas adicionales). El plazo de una gestión no puede ser posterior a la fecha del evento (el mismo día sí).
+- **US-02** Gestiones logísticas: se crean, listan, editan y eliminan de forma inline dentro de `/evento/:id` (sin rutas adicionales). El plazo de una gestión no puede ser posterior a la fecha del evento (el mismo día sí). Las horas estimadas se escriben en un solo campo en horas:minutos de reloj (ej. 2:45; se puede escribir cualquier minuto y las flechas, o ↑ ↓, suben y bajan de 15 en 15) y se muestran como "2:45 h"; al backend se envían en horas con dos decimales (2.75).
 - **US-03** Editar/eliminar evento y gestiones: edición inline, modal de confirmación ("Esta acción no se puede deshacer"), reintento ante errores y estados vacíos.
 - **US-04** Vista **Hoy** (`/hoy`): agrupa las gestiones logísticas de todos los eventos en *Vencidas*, *Para hoy* y *Próximas*, con la regla de orden visible (se oculta mientras no haya gestiones). Los eventos no aparecen como filas: la etiqueta de cada gestión muestra el nombre de su evento con el color de su tipo.
 - **US-05** Filtros en **Hoy**: por evento y por estado (*Vencidas*, *Para hoy*, *Próximas*). Se aplican sin reordenar (se mantiene la regla de prioridad), quedan en la URL (`/hoy?evento=3&estado=vencidas`) y se limpian con "Limpiar filtros". Si no hay resultados: "No hay gestiones para estos filtros".

@@ -139,9 +139,15 @@ a:hover {
   color: var(--accent);
 }
 
+/* El anillo morado de foco se cierra suave sobre el elemento al llegar a él. */
 :focus-visible {
   outline: none;
   box-shadow: var(--focus);
+  animation: focus-ring var(--dur) var(--ease-out);
+}
+
+@keyframes focus-ring {
+  from { box-shadow: 0 0 0 7px transparent; }
 }
 
 /* Cambio de tema (ver ThemeToggle.jsx): los colores de toda la página se

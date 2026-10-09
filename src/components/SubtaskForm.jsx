@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
+import DurationInput from './DurationInput'
 import Field from './Field'
 import { validateSubtask } from '../lib/validation'
-import { formatDate, todayYmd } from '../lib/format'
+import { formatDate, parseDuration, toDurationText, toHours, todayYmd } from '../lib/format'
 
 const FIELD_ORDER = ['name', 'deadline', 'estimatedHours']
 
@@ -9,7 +10,7 @@ function toFormValues(subtask) {
   return {
     name: subtask?.name ?? '',
     deadline: subtask?.deadline?.slice(0, 10) ?? '',
-    estimatedHours: subtask?.estimatedHours != null ? String(subtask.estimatedHours) : '',
+    estimatedHours: toDurationText(subtask?.estimatedHours),
   }
 }
 
@@ -54,7 +55,7 @@ export default function SubtaskForm({
       await onSubmit({
         name: values.name.trim(),
         deadline: values.deadline,
-        estimatedHours: Number(values.estimatedHours),
+        estimatedHours: toHours(parseDuration(values.estimatedHours)),
       })
       if (resetOnSuccess) {
         setValues(toFormValues(null))
@@ -100,11 +101,11 @@ export default function SubtaskForm({
               value={values.deadline} onChange={(e) => update('deadline', e.target.value)} />
           )}
         </Field>
-        <Field id={`${idPrefix}-hours`} label="Horas estimadas" required error={errors.estimatedHours}>
+        <Field id={`${idPrefix}-hours`} label="Horas estimadas" required error={errors.estimatedHours}
+          hint="Horas:minutos, ej. 2:45. Las flechas suben y bajan de 15 en 15 minutos.">
           {(p) => (
-            <input {...p} name="estimatedHours" type="number" inputMode="decimal" min="0.25" step="0.25"
-              placeholder="Ej. 4" value={values.estimatedHours}
-              onChange={(e) => update('estimatedHours', e.target.value)} />
+            <DurationInput fieldProps={p} value={values.estimatedHours}
+              onChange={(value) => update('estimatedHours', value)} />
           )}
         </Field>
       </div>

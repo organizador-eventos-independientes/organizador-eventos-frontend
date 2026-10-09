@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import Logo from './Logo'
 import ThemeToggle from './ThemeToggle'
@@ -14,6 +14,9 @@ export default function TopBar() {
   const session = useSession()
   const navigate = useNavigate()
   const barRef = useRef(null)
+  // El pulpo saluda al pasar el cursor por la marca (o enfocarla) y termina el
+  // saludo completo aunque el cursor se vaya antes.
+  const [waving, setWaving] = useState(false)
 
   // Su alto (cambia si baja a una segunda línea) se publica en --topbar-h para
   // que al desplazar la página hasta un elemento este no quede debajo de ella.
@@ -37,9 +40,11 @@ export default function TopBar() {
   return (
     <header ref={barRef} className="topbar">
       <div className="topbar__start">
-        <Link to="/eventos" className="topbar__brand">
-          <Logo variant="barra" />
-          <span className="brand-name">Slap Slap / organizador de eventos</span>
+        <Link to="/eventos" className="topbar__brand"
+          onMouseEnter={() => setWaving(true)} onFocus={() => setWaving(true)}
+          onAnimationEnd={(e) => e.animationName === 'logo-wave' && setWaving(false)}>
+          <Logo variant="barra" waving={waving} />
+          <span className="brand-name">Slap Slap / organizador de eventos</span>  
         </Link>
         {session && (
           <nav className="topbar__nav" aria-label="Principal">

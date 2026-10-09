@@ -59,6 +59,15 @@
   transform: scale(0.96);
 }
 
+/* Al pasar el cursor, la luna o el sol se inclinan un poco. */
+.theme-toggle svg {
+  transition: transform var(--dur) var(--ease-out);
+}
+
+.theme-toggle:hover svg {
+  transform: rotate(15deg);
+}
+
 /* El icono entra con un giro corto cada vez que cambia (ThemeToggle le da un
    key nuevo). */
 .theme-toggle__icon {
@@ -98,16 +107,33 @@
   mask: url('/logo-barra-trazo.png') center / contain no-repeat;
 }
 
-/* Las medidas respetan la proporción de la imagen (366×259). */
+/* Las medidas respetan la proporción de la imagen (366×259).
+   Barra: el pulpo aparece al cargar la página y, al pasar el cursor por la
+   marca, saluda balanceándose sobre su base (TopBar añade .logo--wave y la
+   quita al terminar). La entrada sigue primera en la lista de animaciones
+   para que no se repita al saludar. */
 .logo--barra {
   width: 54px;
   height: 38px;
+  transform-origin: 50% 85%;
+  animation: logo-in var(--dur-slow) var(--ease-out) 80ms backwards;
 }
 
+.logo--barra.logo--wave {
+  animation:
+    logo-in var(--dur-slow) var(--ease-out) 80ms backwards,
+    logo-wave 0.9s ease-in-out;
+}
+
+/* Inicio: el pulpo entra creciendo y luego flota despacio; su sombra se
+   achica y se aclara cuando sube. */
 .logo--inicio {
   width: 220px;
   height: 156px;
   margin: 0 auto;
+  animation:
+    logo-intro 0.6s var(--ease-out) backwards,
+    logo-float 4s ease-in-out 0.6s infinite;
 }
 
 /* Nombre de la marca: la misma letra que el resto de la app, en mayúsculas y espaciada. */
@@ -127,7 +153,24 @@
 }
 
 .logo-inicio {
-  margin-bottom: 18px;
+  position: relative;
+  width: fit-content;
+  margin: 0 auto 18px;
+}
+
+.logo-inicio::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 120px;
+  height: 14px;
+  margin-left: -60px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--text-h) 22%, transparent), transparent);
+  animation:
+    fade-in 0.6s var(--ease-out) backwards,
+    shadow-float 4s ease-in-out 0.6s infinite;
 }
 
 .logo-inicio__name {
@@ -471,6 +514,18 @@ html {
   font-size: 0.9rem;
 }
 
+/* El "+" de "Crear evento" gira un cuarto de vuelta al pasar el cursor. */
+.btn__plus {
+  display: inline-block;
+  font-size: 1.15em;
+  line-height: 1;
+  transition: transform var(--dur) var(--ease-out);
+}
+
+.btn:hover .btn__plus {
+  transform: rotate(90deg);
+}
+
 .btn--primary {
   background: var(--accent);
   color: var(--on-accent);
@@ -515,6 +570,42 @@ html {
   box-shadow: 0 6px 18px color-mix(in srgb, var(--danger) 35%, transparent);
 }
 
+/* ---------- Luz bajo el cursor ----------
+   En botones, chips, botones de filtro y opciones del conflicto, una luz suave
+   sigue al cursor por dentro (lib/pointerGlow.js guarda su posición en
+   --glow-x / --glow-y). Morada sobre fondos claros, blanca sobre los rellenos
+   de color. En pantallas táctiles no aparece. */
+:is(.btn, .chip, .filters__toggle, .conflict__option) {
+  --glow-c: color-mix(in srgb, var(--accent) 16%, transparent);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+:is(.btn, .chip, .filters__toggle, .conflict__option)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(140px circle at var(--glow-x, 50%) var(--glow-y, 50%), var(--glow-c), transparent 70%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur) var(--ease-out);
+}
+
+:is(.btn, .chip, .filters__toggle, .conflict__option):hover:not(:disabled)::after {
+  opacity: 1;
+}
+
+:is(.btn--primary, .btn--danger, .chip[aria-pressed='true']) {
+  --glow-c: rgba(255, 255, 255, 0.24);
+}
+
+.btn--ghost-danger {
+  --glow-c: color-mix(in srgb, var(--danger) 14%, transparent);
+}
+
 /* ---------- Forms ---------- */
 .form {
   display: flex;
@@ -546,10 +637,16 @@ html {
   gap: 6px;
 }
 
+/* El título del campo se pinta de morado mientras se escribe en él. */
 .field__label {
   font-weight: 600;
   color: var(--text-h);
   font-size: 0.95rem;
+  transition: color var(--dur) var(--ease-out);
+}
+
+.field:focus-within .field__label {
+  color: var(--accent-text);
 }
 
 .field__req {
@@ -569,6 +666,14 @@ html {
     border-color var(--dur) var(--ease-out),
     box-shadow var(--dur) var(--ease-out),
     background-color var(--dur) var(--ease-out);
+}
+
+/* Los campos de texto, fecha y número miden lo mismo (el de fecha del
+   navegador sale un poco más alto), para que en una fila las etiquetas, los
+   recuadros y las ayudas queden parejos. */
+.field input {
+  height: 44px;
+  padding-block: 0;
 }
 
 /* Lista desplegable con flecha propia: la nativa queda pegada al borde y, en
@@ -609,6 +714,54 @@ html {
   box-shadow: var(--focus);
 }
 
+/* Horas estimadas (DurationInput): un campo "horas:minutos" con dos flechas
+   apiladas dentro, a la derecha, que suben y bajan de 15 en 15 minutos. */
+.duration {
+  position: relative;
+}
+
+.field .duration input {
+  padding-right: 40px;
+  font-variant-numeric: tabular-nums;
+}
+
+.duration__steps {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 28px;
+}
+
+.duration__step {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.duration__step:hover {
+  background: var(--accent-bg);
+  color: var(--accent-text);
+}
+
+.duration__step:active {
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+}
+
 /* Un campo con error se marca con el borde rojo; el mensaje aparece debajo
    con un fundido. */
 .field--invalid input,
@@ -619,6 +772,16 @@ html {
 .field__hint {
   font-size: 0.85rem;
   color: var(--text-muted);
+}
+
+/* Una ayuda de varias líneas (p. ej. la fecha actual y la del evento al
+   reprogramar), una debajo de otra con un poco de aire. */
+.field__hint-line {
+  display: block;
+}
+
+.field__hint-line + .field__hint-line {
+  margin-top: 4px;
 }
 
 .field__error {
@@ -804,8 +967,20 @@ html {
   width: 50%;
 }
 
-/* ---------- Badges ---------- */
+/* ---------- Badges ----------
+   Las etiquetas se despliegan de izquierda a derecha justo después de su
+   tarjeta o fila (heredan su --stagger). Al pasar el cursor por la tarjeta o
+   la fila, su color se intensifica, la cruza un brillo y el punto late una vez;
+   en las gestiones vencidas el punto late solo, despacio, para llamar la
+   atención. */
 .badge {
+  position: relative;
+  overflow: hidden;
+  animation: badge-in var(--dur-slow) var(--ease-out) backwards;
+  animation-delay: calc(var(--stagger, 0) * 30ms + 140ms);
+  transition:
+    background-color var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out);
   --badge-c: var(--accent-text);
   display: inline-flex;
   align-items: center;
@@ -825,10 +1000,38 @@ html {
 
 .badge::before {
   content: '';
+  flex: none;
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: currentColor;
+}
+
+.today-group--overdue .today-item__type::before {
+  animation: dot-ping 2.4s var(--ease-out) 0.6s infinite;
+}
+
+:is(.event-card, .today-item):hover .badge::before {
+  animation: dot-ping 0.9s var(--ease-out);
+}
+
+.badge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.4) 50%, transparent 65%);
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+
+:is(.event-card, .today-item):hover .badge {
+  background: color-mix(in srgb, var(--badge-c) 18%, transparent);
+  border-color: color-mix(in srgb, var(--badge-c) 45%, transparent);
+}
+
+:is(.event-card, .today-item):hover .badge::after {
+  transform: translateX(120%);
+  transition: transform 0.8s var(--ease-out);
 }
 
 .badge--boda { --badge-c: var(--type-boda); }
@@ -871,16 +1074,31 @@ html {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
-  animation: rise-in var(--dur-slow) var(--ease-out) 60ms backwards;
+  animation: tab-in 0.42s var(--ease-out) 80ms backwards;
 }
 
 .event-tab.badge--otro {
   color: var(--on-accent);
 }
 
+/* La pestaña sale de detrás de la tarjeta desplegándose hacia la derecha; al
+   pasar el cursor sube un poco y la cruza un brillo suave. */
+.event-tab::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.4) 50%, transparent 65%);
+  transform: translateX(-120%);
+}
+
 .event-tab:hover {
   transform: translateY(-2px);
   box-shadow: 0 -4px 12px color-mix(in srgb, var(--badge-c) 30%, transparent);
+}
+
+.event-tab:hover::after {
+  transform: translateX(120%);
+  transition: transform 0.7s var(--ease-out);
 }
 
 .event-head {
@@ -1184,6 +1402,7 @@ html {
   font-weight: 700;
   color: var(--on-status);
   background: var(--toast-c);
+  animation: pop-in var(--dur) var(--ease-out) 120ms backwards;
 }
 
 .toast__msg {
@@ -1352,6 +1571,7 @@ html {
   text-overflow: ellipsis;
 }
 
+/* Late al aparecer y cada vez que cambia (TodayPage le da un key nuevo). */
 .today-group__count {
   color: var(--text-h);
   animation: pop-in var(--dur) var(--ease-out) 0.15s backwards;
@@ -1569,6 +1789,11 @@ html {
 
 .filters__icon {
   color: var(--accent-text);
+  transition: transform var(--dur) var(--ease-out);
+}
+
+.filters__toggle:hover .filters__icon {
+  transform: scale(1.12);
 }
 
 .filters__badge {
@@ -1727,8 +1952,10 @@ html {
   font-weight: 600;
 }
 
+/* El número late cuando cambia (TodayPage le da un key nuevo con cada valor). */
 .chip__count {
   transition: background-color var(--dur) var(--ease-out);
+  animation: pop-in var(--dur) var(--ease-out);
 }
 
 .chip[aria-pressed='true'] .chip__count {
@@ -1869,4 +2096,48 @@ html {
     background-color: var(--moved-c);
     box-shadow: -12px 0 0 var(--moved-c), 12px 0 0 var(--moved-c);
   }
+}
+
+/* Logos y etiquetas. */
+@keyframes logo-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.9) rotate(-6deg); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes logo-wave {
+  0%, 100% { transform: none; }
+  20% { transform: translateY(-3px) rotate(-8deg); }
+  45% { transform: translateY(-1px) rotate(6deg); }
+  70% { transform: rotate(-3deg); }
+  85% { transform: rotate(1deg); }
+}
+
+@keyframes logo-intro {
+  from { opacity: 0; transform: translateY(16px) scale(0.85); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes logo-float {
+  0%, 100% { transform: none; }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes shadow-float {
+  0%, 100% { opacity: 1; transform: scaleX(1); }
+  50% { opacity: 0.55; transform: scaleX(0.8); }
+}
+
+@keyframes badge-in {
+  from { opacity: 0; clip-path: inset(0 100% 0 0 round 999px); }
+  to { opacity: 1; clip-path: inset(0 0 0 0 round 999px); }
+}
+
+@keyframes dot-ping {
+  from { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 55%, transparent); }
+  to { box-shadow: 0 0 0 6px transparent; }
+}
+
+@keyframes tab-in {
+  from { opacity: 0; transform: translateY(8px); clip-path: inset(0 100% 0 0 round 10px 10px 0 0); }
+  to { opacity: 1; transform: none; clip-path: inset(0 0 0 0 round 10px 10px 0 0); }
 }

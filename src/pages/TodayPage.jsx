@@ -169,7 +169,7 @@ export default function TodayPage() {
           <p className="muted">Lo que requiere tu atención primero, en todos tus eventos.</p>
         </div>
         {data?.events.length > 0 && (
-          <Link to="/eventos/nuevo" className="btn btn--primary">+ Crear evento</Link>
+          <Link to="/eventos/nuevo" className="btn btn--primary"><span className="btn__plus" aria-hidden="true">+</span> Crear evento</Link>
         )}
       </header>
 
@@ -207,7 +207,7 @@ export default function TodayPage() {
                 </svg>
                 Filtros
                 {filtering && (
-                  <span className="filters__badge" aria-label={`${activeFilters} activos`}>{activeFilters}</span>
+                  <span key={activeFilters} className="filters__badge" aria-label={`${activeFilters} activos`}>{activeFilters}</span>
                 )}
                 <span className="filters__caret" aria-hidden="true">▾</span>
               </button>
@@ -296,7 +296,7 @@ export default function TodayPage() {
                       {GROUPS.map((g) => (
                         <button key={g.key} type="button" className="chip" aria-pressed={statusFilter === g.status}
                           onClick={() => setFilter('estado', statusFilter === g.status ? null : g.status)}>
-                          <span className="cap-text">{g.label}</span> <span className="chip__count">{ofEvent(groups[g.key]).length}</span>
+                          <span className="cap-text">{g.label}</span> <span key={ofEvent(groups[g.key]).length} className="chip__count">{ofEvent(groups[g.key]).length}</span>
                         </button>
                       ))}
                     </div>
@@ -318,7 +318,7 @@ export default function TodayPage() {
                 <header className="card__header">
                   <div>
                     <h2 id={`group-${g.key}`} className="card__title cap-row">
-                      <span className="cap-text">{g.title}</span> <span className="today-group__count">{g.items.length}</span>
+                      <span className="cap-text">{g.title}</span> <span key={g.items.length} className="today-group__count">{g.items.length}</span>
                     </h2>
                     <p className="muted">{g.hint}</p>
                   </div>

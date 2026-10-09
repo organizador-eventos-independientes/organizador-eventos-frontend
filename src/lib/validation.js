@@ -1,4 +1,4 @@
-import { formatDate, nowDateTimeLocal, toDateTimeLocal, todayYmd } from './format'
+import { formatDate, nowDateTimeLocal, parseDuration, toDateTimeLocal, todayYmd } from './format'
 
 export const EVENT_TYPES = [
   { value: 'boda', label: 'Boda', hint: 'Ceremonia y recepción de una pareja.' },
@@ -62,21 +62,22 @@ export function validateSubtask(data, original, eventDate) {
   else if (isAfterEvent(data.deadline, eventDate))
     errors.deadline = `El plazo no puede ser posterior a la fecha del evento (${formatDate(eventDate)}).`
 
-  const hoursError = validateEstimatedHours(data.estimatedHours)
+  const hoursError = validateDuration(data.estimatedHours)
   if (hoursError) errors.estimatedHours = hoursError
 
   return errors
 }
 
-// Horas estimadas de una gestión (al crearla, editarla o reprogramarla).
-// Devuelve el mensaje de error o '' si son válidas.
-export function validateEstimatedHours(value) {
-  const hours = Number(value)
-  if (isBlank(value)) return 'Indica las horas estimadas.'
-  if (!Number.isFinite(hours)) return 'Las horas deben ser un número (ej. 4 o 1.5).'
-  if (hours <= 0) return 'Las horas deben ser mayores que 0.'
-  if (hours > 999.99) return 'Las horas no pueden superar 999.99.'
-  if (!/^\d+(\.\d{1,2})?$/.test(String(value).trim())) return 'Usa máximo 2 decimales (ej. 1.5).'
+// Horas estimadas de una gestión (al crearla, editarla o reprogramarla), en
+// horas y minutos de reloj con el texto del campo (DurationInput): "2:45", o
+// solo las horas ("2"). Devuelve el mensaje de error o '' si son válidas.
+export function validateDuration(text) {
+  const value = String(text ?? '').trim()
+  if (!value) return 'Indica las horas estimadas.'
+  const match = /^(\d{1,3})(?::(\d{1,2}))?$/.exec(value)
+  if (!match) return 'Usa horas:minutos (ej. 2:45).'
+  if (Number(match[2] ?? 0) > 59) return 'Los minutos van de 0 a 59 (ej. 2:45 en vez de 2:75).'
+  if (parseDuration(value) <= 0) return 'Las horas estimadas deben ser mayores que 0.'
   return ''
 }
 

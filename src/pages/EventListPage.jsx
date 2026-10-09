@@ -31,7 +31,7 @@ export default function EventListPage() {
           <p className="muted">Planifica la logística de cada evento que organizas.</p>
         </div>
         {events?.length > 0 && (
-          <Link to="/eventos/nuevo" className="btn btn--primary">+ Crear evento</Link>
+          <Link to="/eventos/nuevo" className="btn btn--primary"><span className="btn__plus" aria-hidden="true">+</span> Crear evento</Link>
         )}
       </header>
 

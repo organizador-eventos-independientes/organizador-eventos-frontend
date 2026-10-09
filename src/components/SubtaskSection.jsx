@@ -2,7 +2,7 @@ import { useState } from 'react'
 import SubtaskForm from './SubtaskForm'
 import ConfirmDialog from './ConfirmDialog'
 import { createSubtask, deleteSubtask, updateSubtask } from '../api/events'
-import { formatDate, formatHours } from '../lib/format'
+import { formatDate, formatHours, formatMinutes, toMinutes } from '../lib/format'
 import { useToast } from '../lib/toast'
 
 const byDeadline = (a, b) => a.deadline.localeCompare(b.deadline)
@@ -15,7 +15,8 @@ export default function SubtaskSection({ eventId, eventDate, subtasks, onChange 
   const [editingId, setEditingId] = useState(null)
   const [toDelete, setToDelete] = useState(null)
 
-  const totalHours = subtasks.reduce((sum, s) => sum + Number(s.estimatedHours || 0), 0)
+  // Se suma en minutos para que, p. ej., tres gestiones de 0:20 den 1 h exacta.
+  const totalMinutes = subtasks.reduce((sum, s) => sum + toMinutes(s.estimatedHours || 0), 0)
 
   async function handleCreate(data) {
     const created = await createSubtask(eventId, data)
@@ -44,7 +45,7 @@ export default function SubtaskSection({ eventId, eventDate, subtasks, onChange 
           <h2 id="subtasks-title" className="card__title">Gestiones logísticas</h2>
           {subtasks.length > 0 && (
             <p className="muted">
-              {subtasks.length} {subtasks.length === 1 ? 'gestión' : 'gestiones'} · {formatHours(totalHours)} estimadas
+              {subtasks.length} {subtasks.length === 1 ? 'gestión' : 'gestiones'} · {formatMinutes(totalMinutes)} estimadas
             </p>
           )}
         </div>
