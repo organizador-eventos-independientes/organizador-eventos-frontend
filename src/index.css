@@ -61,6 +61,12 @@
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
+  /* Safari de iOS no agranda la letra al girar el celular, y al tocar no se
+     pinta el recuadro gris del navegador: cada control tiene su propia
+     respuesta al toque (App.css). */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* data-theme lo fija el script de index.html (tema guardado o del sistema)
@@ -158,15 +164,15 @@ a:hover {
   animation-timing-function: var(--ease-out);
 }
 
-/* Quien pide menos movimiento en su sistema ve los cambios al instante. */
+/* Quien pide menos movimiento en su sistema (en los celulares suele activarse
+   en Accesibilidad, al "quitar animaciones" o con el ahorro de batería) no ve
+   desplazamientos: los colores y la opacidad siguen cambiando con suavidad,
+   pero lo que se movía cambia de sitio al instante. Las animaciones de
+   entrada se vuelven fundidos al final de App.css. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-delay: 0ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    transition-delay: 0ms !important;
+    transition-property: color, background-color, border-color, box-shadow, opacity, visibility !important;
   }
 }

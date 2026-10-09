@@ -10,24 +10,11 @@
   z-index: 50;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
-  flex-wrap: wrap;
   padding: 14px 24px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02), 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.topbar__start {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-}
-
-.topbar__start .topbar__nav {
-  margin-left: 8px;
 }
 
 .theme-toggle {
@@ -49,12 +36,6 @@
     transform var(--dur-fast) var(--ease-out);
 }
 
-.theme-toggle:hover {
-  background: var(--accent-bg);
-  border-color: var(--accent);
-  color: var(--accent-text);
-}
-
 .theme-toggle:active {
   transform: scale(0.96);
 }
@@ -64,8 +45,16 @@
   transition: transform var(--dur) var(--ease-out);
 }
 
-.theme-toggle:hover svg {
-  transform: rotate(15deg);
+@media (hover: hover) {
+  .theme-toggle:hover {
+    background: var(--accent-bg);
+    border-color: var(--accent);
+    color: var(--accent-text);
+  }
+
+  .theme-toggle:hover svg {
+    transform: rotate(15deg);
+  }
 }
 
 /* El icono entra con un giro corto cada vez que cambia (ThemeToggle le da un
@@ -145,10 +134,33 @@
   white-space: nowrap;
 }
 
-@media (max-width: 600px) {
+/* En pantallas angostas el nombre va en dos líneas: "Slap Slap" y, debajo y
+   más pequeño, "organizador de eventos" (se corta con puntos suspensivos si
+   aun así no cabe). */
+@media (max-width: 800px) {
   .brand-name {
-    font-size: 0.68rem;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.25;
+  }
+
+  .brand-name__sep {
+    display: none;
+  }
+
+  .brand-name__sub {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.62rem;
+    font-weight: 500;
     letter-spacing: 0.04em;
+    color: var(--text-muted);
+  }
+
+  .logo--barra {
+    width: 44px;
+    height: 31px;
   }
 }
 
@@ -183,6 +195,7 @@
 .topbar__nav {
   display: flex;
   gap: 4px;
+  margin-left: 8px;
 }
 
 /* Raya morada bajo el módulo activo: crece desde el centro al entrar en él. */
@@ -209,9 +222,14 @@
   transition: transform var(--dur) var(--ease-out);
 }
 
-.topbar__link:hover {
-  background: var(--accent-bg);
-  color: var(--text-h);
+/* Los efectos de hover van solo en pantallas con cursor: en las táctiles el
+   navegador deja el elemento "en hover" después de tocarlo y parecería
+   seleccionado (por eso se repite este @media en todo el archivo). */
+@media (hover: hover) {
+  .topbar__link:hover {
+    background: var(--accent-bg);
+    color: var(--text-h);
+  }
 }
 
 .topbar__link.active {
@@ -224,14 +242,69 @@
   transform: scaleX(1);
 }
 
-/* Siempre a la derecha, también cuando la barra baja a una segunda línea. */
+/* Siempre a la derecha. */
 .topbar__end {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 8px 12px;
-  flex-wrap: wrap;
   margin-left: auto;
+}
+
+/* Pantallas angostas (celulares y tabletas en vertical): la marca y el
+   usuario comparten la primera fila y los módulos bajan a una fila de
+   pestañas del mismo ancho, con la raya morada bajo la activa. */
+@media (max-width: 800px) {
+  /* Sin sesión (login y registro) no hay pestañas: solo la primera fila. */
+  .topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'brand end';
+    gap: 6px 12px;
+    padding: 10px 16px;
+  }
+
+  .topbar--nav {
+    grid-template-areas:
+      'brand end'
+      'nav   nav';
+    padding-bottom: 0;
+  }
+
+  .topbar__brand {
+    grid-area: brand;
+    min-width: 0;
+  }
+
+  .topbar__end {
+    grid-area: end;
+  }
+
+  .topbar .topbar__nav {
+    grid-area: nav;
+    margin: 0 -16px;
+    gap: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .topbar__link {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 0;
+    text-align: center;
+  }
+
+  .topbar__link.active {
+    background: transparent;
+  }
+
+  .topbar__link::after {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+  }
 }
 
 /* ---------- Menú de usuario ---------- */
@@ -261,19 +334,86 @@
   white-space: nowrap;
 }
 
+/* Inicial del usuario en un círculo morado: reemplaza al nombre en los
+   celulares (el nombre completo va arriba, dentro del menú). */
+.user-menu__avatar {
+  display: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.user-menu__who {
+  display: none;
+}
+
+@media (max-width: 800px) {
+  .user-menu__name {
+    max-width: min(180px, 24vw);
+  }
+}
+
+@media (max-width: 480px) {
+  .user-menu__trigger {
+    padding: 4px 6px 4px 4px;
+  }
+
+  .user-menu__avatar {
+    display: grid;
+  }
+
+  .user-menu__name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .user-menu__who {
+    display: flex;
+    flex-direction: column;
+    max-width: calc(100vw - 32px);
+    padding: 8px 12px 10px;
+    margin-bottom: 2px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+  }
+
+  .user-menu__who strong {
+    color: var(--text-h);
+  }
+}
+
 .user-menu__caret {
   display: inline-block;
   transition: transform var(--dur) var(--ease-out);
 }
 
-.user-menu:hover .user-menu__trigger,
-.user-menu:focus-within .user-menu__trigger {
+/* Abierto: con el cursor encima (solo en pantallas con cursor) o tras
+   pulsarlo (TopBar añade .user-menu--open). */
+.user-menu--open .user-menu__trigger {
   background: var(--accent-bg);
 }
 
-.user-menu:hover .user-menu__caret,
-.user-menu:focus-within .user-menu__caret {
+.user-menu--open .user-menu__caret {
   transform: rotate(180deg);
+}
+
+@media (hover: hover) {
+  .user-menu:hover .user-menu__trigger {
+    background: var(--accent-bg);
+  }
+
+  .user-menu:hover .user-menu__caret {
+    transform: rotate(180deg);
+  }
 }
 
 /* El padding superior cubre el hueco entre el nombre y el panel para que el
@@ -293,8 +433,7 @@
     visibility 0s linear var(--dur-fast);
 }
 
-.user-menu:hover .user-menu__panel,
-.user-menu:focus-within .user-menu__panel {
+.user-menu--open .user-menu__panel {
   visibility: visible;
   opacity: 1;
   transform: none;
@@ -302,6 +441,18 @@
     opacity var(--dur) var(--ease-out),
     transform var(--dur) var(--ease-out),
     visibility 0s;
+}
+
+@media (hover: hover) {
+  .user-menu:hover .user-menu__panel {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity var(--dur) var(--ease-out),
+      transform var(--dur) var(--ease-out),
+      visibility 0s;
+  }
 }
 
 /* Caja del menú: "Configuración" (US-12) y "Cerrar sesión", una debajo de otra. */
@@ -333,17 +484,17 @@
   transition: background-color var(--dur-fast) ease;
 }
 
-.user-menu__item:hover {
+.user-menu__item:is(:hover, :active) {
   background: var(--accent-bg);
   color: var(--text-h);
 }
 
 .user-menu__item--danger,
-.user-menu__item--danger:hover {
+.user-menu__item--danger:is(:hover, :active) {
   color: var(--danger);
 }
 
-.user-menu__item--danger:hover {
+.user-menu__item--danger:is(:hover, :active) {
   background: color-mix(in srgb, var(--danger) 10%, var(--surface));
 }
 
@@ -401,9 +552,11 @@ html {
   transition: color var(--dur-fast) ease, transform var(--dur) var(--ease-out);
 }
 
-.back-link:hover {
-  text-decoration: underline;
-  transform: translateX(-3px);
+@media (hover: hover) {
+  .back-link:hover {
+    text-decoration: underline;
+    transform: translateX(-3px);
+  }
 }
 
 .muted {
@@ -445,12 +598,15 @@ html {
 }
 
 /* ---------- Card ---------- */
+/* --card-pad: relleno de la tarjeta (más pequeño en celulares); la barra
+   morada de las filas de gestiones lo usa para pegarse al borde. */
 .card {
+  --card-pad: 24px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 24px;
+  padding: var(--card-pad);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -522,30 +678,14 @@ html {
   transition: transform var(--dur) var(--ease-out);
 }
 
-.btn:hover .btn__plus {
-  transform: rotate(90deg);
-}
-
 .btn--primary {
   background: var(--accent);
   color: var(--on-accent);
 }
 
-.btn--primary:hover:not(:disabled) {
-  background: var(--accent-hover);
-  color: var(--on-accent);
-  box-shadow: var(--glow);
-}
-
 .btn--ghost {
   background: transparent;
   border-color: var(--border);
-  color: var(--text-h);
-}
-
-.btn--ghost:hover:not(:disabled) {
-  background: var(--accent-bg);
-  border-color: var(--accent);
   color: var(--text-h);
 }
 
@@ -555,26 +695,70 @@ html {
   color: var(--danger);
 }
 
-.btn--ghost-danger:hover:not(:disabled) {
-  background: var(--danger-bg);
-  border-color: var(--danger);
-}
-
 .btn--danger {
   background: var(--danger);
   color: var(--on-status);
 }
 
-.btn--danger:hover:not(:disabled) {
-  background: var(--danger-hover);
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--danger) 35%, transparent);
+/* Con cursor, al pasar por encima; en pantallas táctiles, mientras se toca. */
+@media (hover: hover) {
+  .btn:hover .btn__plus {
+    transform: rotate(90deg);
+  }
+
+  .btn--primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+    color: var(--on-accent);
+    box-shadow: var(--glow);
+  }
+
+  .btn--ghost:hover:not(:disabled) {
+    background: var(--accent-bg);
+    border-color: var(--accent);
+    color: var(--text-h);
+  }
+
+  .btn--ghost-danger:hover:not(:disabled) {
+    background: var(--danger-bg);
+    border-color: var(--danger);
+  }
+
+  .btn--danger:hover:not(:disabled) {
+    background: var(--danger-hover);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--danger) 35%, transparent);
+  }
+}
+
+@media (hover: none) {
+  .btn:active .btn__plus {
+    transform: rotate(90deg);
+  }
+
+  .btn--primary:active:not(:disabled) {
+    background: var(--accent-hover);
+    box-shadow: var(--glow);
+  }
+
+  .btn--ghost:active:not(:disabled) {
+    border-color: var(--accent);
+  }
+
+  .btn--ghost-danger:active:not(:disabled) {
+    background: var(--danger-bg);
+    border-color: var(--danger);
+  }
+
+  .btn--danger:active:not(:disabled) {
+    background: var(--danger-hover);
+  }
 }
 
 /* ---------- Luz bajo el cursor ----------
    En botones, chips, botones de filtro y opciones del conflicto, una luz suave
    sigue al cursor por dentro (lib/pointerGlow.js guarda su posición en
    --glow-x / --glow-y). Morada sobre fondos claros, blanca sobre los rellenos
-   de color. En pantallas táctiles no aparece. */
+   de color. En pantallas táctiles se enciende bajo el dedo al tocar y se
+   apaga con un fundido al soltar. */
 :is(.btn, .chip, .filters__toggle, .conflict__option) {
   --glow-c: color-mix(in srgb, var(--accent) 16%, transparent);
   position: relative;
@@ -594,8 +778,17 @@ html {
   transition: opacity var(--dur) var(--ease-out);
 }
 
-:is(.btn, .chip, .filters__toggle, .conflict__option):hover:not(:disabled)::after {
-  opacity: 1;
+@media (hover: hover) {
+  :is(.btn, .chip, .filters__toggle, .conflict__option):hover:not(:disabled)::after {
+    opacity: 1;
+  }
+}
+
+@media (hover: none) {
+  :is(.btn, .chip, .filters__toggle, .conflict__option):active:not(:disabled)::after {
+    opacity: 1;
+    transition-duration: 0s;
+  }
 }
 
 :is(.btn--primary, .btn--danger, .chip[aria-pressed='true']) {
@@ -692,7 +885,6 @@ html {
   cursor: pointer;
 }
 
-.field select:hover,
 .field select:focus {
   background-image: var(--select-arrow-hi);
 }
@@ -702,9 +894,25 @@ html {
   color: var(--text-h);
 }
 
-.field input:hover,
-.field select:hover {
-  border-color: var(--border-strong);
+@media (hover: hover) {
+  .field select:hover {
+    background-image: var(--select-arrow-hi);
+  }
+
+  .field input:hover,
+  .field select:hover {
+    border-color: var(--border-strong);
+  }
+}
+
+/* Safari de iOS centra el texto de los campos de fecha y les pone un ancho
+   mínimo propio; se alinean a la izquierda como los demás y caben en su caja. */
+.field input {
+  min-width: 0;
+}
+
+.field input::-webkit-date-and-time-value {
+  text-align: left;
 }
 
 .field input:focus,
@@ -753,13 +961,31 @@ html {
     color var(--dur-fast) var(--ease-out);
 }
 
-.duration__step:hover {
-  background: var(--accent-bg);
-  color: var(--accent-text);
+@media (hover: hover) {
+  .duration__step:hover {
+    background: var(--accent-bg);
+    color: var(--accent-text);
+  }
 }
 
 .duration__step:active {
   background: color-mix(in srgb, var(--accent) 24%, transparent);
+  color: var(--accent-text);
+}
+
+/* Con el dedo, dos flechas apiladas de 17px de alto son difíciles de acertar:
+   se ponen lado a lado (bajar a la izquierda, subir a la derecha), cada una
+   del alto del campo. */
+@media (pointer: coarse) {
+  .field .duration input {
+    padding-right: 84px;
+  }
+
+  .duration__steps {
+    flex-direction: row-reverse;
+    gap: 4px;
+    width: 76px;
+  }
 }
 
 /* Un campo con error se marca con el borde rojo; el mensaje aparece debajo
@@ -875,9 +1101,26 @@ html {
   transition: opacity var(--dur) var(--ease-out);
 }
 
-.event-list > li:hover::before,
 .event-list > li:focus-within::before {
   opacity: 1;
+}
+
+@media (hover: hover) {
+  .event-list > li:hover::before {
+    opacity: 1;
+  }
+}
+
+/* En pantallas táctiles el bloque morado aparece mientras se toca la tarjeta. */
+@media (hover: none) {
+  .event-list > li:active::before {
+    opacity: 1;
+    transition-duration: 0s;
+  }
+
+  .event-list > li:active .event-card {
+    transform: translate(4px, -4px);
+  }
 }
 
 .event-card {
@@ -898,14 +1141,26 @@ html {
     border-color var(--dur) var(--ease-out);
 }
 
-.event-card:hover,
 .event-card:focus-visible {
   color: inherit;
   border-color: var(--accent);
   transform: translate(4px, -4px);
 }
 
+@media (hover: hover) {
+  .event-card:hover {
+    color: inherit;
+    border-color: var(--accent);
+    transform: translate(4px, -4px);
+  }
+
+  .event-card:hover .event-card__name {
+    color: var(--accent-text);
+  }
+}
+
 .event-card:active {
+  border-color: var(--accent);
   transform: translate(2px, -2px);
   transition-duration: var(--dur-fast);
 }
@@ -914,10 +1169,11 @@ html {
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-h);
+  overflow-wrap: anywhere;
   transition: color var(--dur) var(--ease-out);
 }
 
-.event-card:hover .event-card__name {
+.event-card:active .event-card__name {
   color: var(--accent-text);
 }
 
@@ -971,8 +1227,9 @@ html {
    Las etiquetas se despliegan de izquierda a derecha justo después de su
    tarjeta o fila (heredan su --stagger). Al pasar el cursor por la tarjeta o
    la fila, su color se intensifica, la cruza un brillo y el punto late una vez;
-   en las gestiones vencidas el punto late solo, despacio, para llamar la
-   atención. */
+   en pantallas táctiles (sin cursor) el brillo y el latido llegan solos, una
+   vez, al terminar de desplegarse. En las gestiones vencidas el punto late
+   solo, despacio, para llamar la atención. */
 .badge {
   position: relative;
   overflow: hidden;
@@ -1007,14 +1264,6 @@ html {
   background: currentColor;
 }
 
-.today-group--overdue .today-item__type::before {
-  animation: dot-ping 2.4s var(--ease-out) 0.6s infinite;
-}
-
-:is(.event-card, .today-item):hover .badge::before {
-  animation: dot-ping 0.9s var(--ease-out);
-}
-
 .badge::after {
   content: '';
   position: absolute;
@@ -1024,14 +1273,36 @@ html {
   pointer-events: none;
 }
 
-:is(.event-card, .today-item):hover .badge {
-  background: color-mix(in srgb, var(--badge-c) 18%, transparent);
-  border-color: color-mix(in srgb, var(--badge-c) 45%, transparent);
+@media (hover: hover) {
+  :is(.event-card, .today-item):hover .badge::before {
+    animation: dot-ping 0.9s var(--ease-out);
+  }
+
+  :is(.event-card, .today-item):hover .badge {
+    background: color-mix(in srgb, var(--badge-c) 18%, transparent);
+    border-color: color-mix(in srgb, var(--badge-c) 45%, transparent);
+  }
+
+  :is(.event-card, .today-item):hover .badge::after {
+    transform: translateX(120%);
+    transition: transform 0.8s var(--ease-out);
+  }
 }
 
-:is(.event-card, .today-item):hover .badge::after {
-  transform: translateX(120%);
-  transition: transform 0.8s var(--ease-out);
+@media (hover: none) {
+  .badge::before {
+    animation: dot-ping 0.9s var(--ease-out) backwards;
+    animation-delay: calc(var(--stagger, 0) * 30ms + 500ms);
+  }
+
+  .badge::after {
+    animation: shine 0.8s var(--ease-out) backwards;
+    animation-delay: calc(var(--stagger, 0) * 30ms + 500ms);
+  }
+}
+
+.today-group--overdue .today-item__type::before {
+  animation: dot-ping 2.4s var(--ease-out) 0.6s infinite;
 }
 
 .badge--boda { --badge-c: var(--type-boda); }
@@ -1082,7 +1353,8 @@ html {
 }
 
 /* La pestaña sale de detrás de la tarjeta desplegándose hacia la derecha; al
-   pasar el cursor sube un poco y la cruza un brillo suave. */
+   pasar el cursor sube un poco y la cruza un brillo suave (en pantallas
+   táctiles el brillo pasa solo, una vez, al terminar de salir). */
 .event-tab::after {
   content: '';
   position: absolute;
@@ -1091,14 +1363,22 @@ html {
   transform: translateX(-120%);
 }
 
-.event-tab:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 -4px 12px color-mix(in srgb, var(--badge-c) 30%, transparent);
+@media (hover: hover) {
+  .event-tab:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 -4px 12px color-mix(in srgb, var(--badge-c) 30%, transparent);
+  }
+
+  .event-tab:hover::after {
+    transform: translateX(120%);
+    transition: transform 0.7s var(--ease-out);
+  }
 }
 
-.event-tab:hover::after {
-  transform: translateX(120%);
-  transition: transform 0.7s var(--ease-out);
+@media (hover: none) {
+  .event-tab::after {
+    animation: shine 0.7s var(--ease-out) 0.55s backwards;
+  }
 }
 
 .event-head {
@@ -1232,7 +1512,7 @@ html {
 .subtasks__item::before {
   content: '';
   position: absolute;
-  left: -24px;
+  left: calc(-1 * var(--card-pad, 24px));
   top: 10px;
   bottom: 10px;
   width: 3px;
@@ -1242,8 +1522,10 @@ html {
   transition: transform var(--dur) var(--ease-out);
 }
 
-.subtasks__item:hover::before {
-  transform: scaleY(1);
+@media (hover: hover) {
+  .subtasks__item:hover::before {
+    transform: scaleY(1);
+  }
 }
 
 .subtasks__item--editing {
@@ -1423,7 +1705,7 @@ html {
   transition: color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
 }
 
-.toast__close:hover {
+.toast__close:is(:hover, :active) {
   color: var(--text-h);
   background: var(--surface-2);
 }
@@ -1705,12 +1987,15 @@ html {
   font-size: 0.95rem;
 }
 
-.conflict__option:hover:not(:disabled) {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+@media (hover: hover) {
+  .conflict__option:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+  }
 }
 
 .conflict__option:active:not(:disabled) {
+  border-color: var(--accent);
   transform: scale(0.98);
 }
 
@@ -1774,12 +2059,8 @@ html {
     transform var(--dur-fast) var(--ease-out);
 }
 
-.filters__toggle:hover {
-  background: var(--accent-bg);
-  border-color: var(--accent);
-}
-
 .filters__toggle:active {
+  border-color: var(--accent);
   transform: scale(0.98);
 }
 
@@ -1792,7 +2073,18 @@ html {
   transition: transform var(--dur) var(--ease-out);
 }
 
-.filters__toggle:hover .filters__icon {
+@media (hover: hover) {
+  .filters__toggle:hover {
+    background: var(--accent-bg);
+    border-color: var(--accent);
+  }
+
+  .filters__toggle:hover .filters__icon {
+    transform: scale(1.12);
+  }
+}
+
+.filters__toggle:active .filters__icon {
   transform: scale(1.12);
 }
 
@@ -1935,9 +2227,11 @@ html {
     transform var(--dur-fast) var(--ease-out);
 }
 
-.chip[aria-pressed='false']:hover {
-  background: var(--accent-bg);
-  border-color: var(--accent);
+@media (hover: hover) {
+  .chip[aria-pressed='false']:hover {
+    background: var(--accent-bg);
+    border-color: var(--accent);
+  }
 }
 
 .chip:active {
@@ -2011,9 +2305,16 @@ html {
     transform var(--dur-fast) var(--ease-out);
 }
 
-.password-input__toggle:hover {
+.password-input__toggle:active {
   background: var(--accent-bg);
   color: var(--accent-text);
+}
+
+@media (hover: hover) {
+  .password-input__toggle:hover {
+    background: var(--accent-bg);
+    color: var(--accent-text);
+  }
 }
 
 .password-input__toggle:active {
@@ -2023,6 +2324,125 @@ html {
 .auth-page__note {
   font-size: 0.9rem;
   text-align: center;
+}
+
+/* ---------- Celulares ----------
+   Hasta 640px de ancho: menos relleno alrededor, títulos algo más chicos y,
+   en cada fila de botones, los botones se reparten el ancho (si no caben
+   juntos, cada uno ocupa su propia línea) en vez de quedar sueltos a un lado. */
+@media (max-width: 640px) {
+  .main {
+    padding: 20px 12px 48px;
+  }
+
+  .page {
+    gap: 16px;
+  }
+
+  .card {
+    --card-pad: 16px;
+  }
+
+  .page__title {
+    font-size: 1.5rem;
+  }
+
+  /* "Crear evento" a lo ancho, debajo del título. */
+  .page__header > .btn {
+    flex: 1 1 100%;
+  }
+
+  :is(.form__actions, .dialog__actions, .reschedule-form__actions, .today-item__actions, .subtasks__actions, .event-head__actions) {
+    flex-wrap: wrap;
+  }
+
+  :is(.form__actions, .dialog__actions, .reschedule-form__actions, .today-item__actions, .subtasks__actions, .event-head__actions) > .btn {
+    flex: 1 1 auto;
+  }
+
+  .event-head__actions,
+  .subtasks__actions {
+    flex: 1 1 100%;
+  }
+
+  .today-item__actions .btn {
+    max-width: none;
+    text-align: center;
+  }
+
+  .details {
+    padding: 0 12px;
+  }
+
+  .subtask-new,
+  .subtasks__item--editing,
+  .subtasks__item.today-item--rescheduling {
+    padding: 12px;
+  }
+
+  /* Hoy: la etiqueta del evento sube encima del nombre para que este use
+     todo el ancho de la fila. */
+  .subtasks__item.today-item {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'type'
+      'name'
+      'meta'
+      'actions';
+  }
+
+  .today-item__type {
+    justify-self: start;
+    max-width: 100%;
+    margin: 0 0 4px;
+  }
+
+  /* Barra de filtros: los tres botones se estiran para llenar cada línea, con
+     la flecha al final, y el resumen va debajo. */
+  .filters__bar {
+    gap: 8px;
+  }
+
+  .filters__toggle {
+    flex: 1 1 auto;
+  }
+
+  .filters__caret {
+    margin-left: auto;
+  }
+
+  .filters__summary {
+    flex-basis: 100%;
+  }
+
+  .reschedule-form__fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .conflict {
+    padding: 12px;
+  }
+
+  .dialog {
+    padding: 20px;
+  }
+
+  /* Los avisos ocupan el ancho de la pantalla, abajo. */
+  .toasts {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    max-width: none;
+  }
+
+  .auth-page {
+    padding-top: 0;
+  }
+
+  .logo--inicio {
+    width: 170px;
+    height: 121px;
+  }
 }
 
 /* ---------- Animaciones ----------
@@ -2140,4 +2560,33 @@ html {
 @keyframes tab-in {
   from { opacity: 0; transform: translateY(8px); clip-path: inset(0 100% 0 0 round 10px 10px 0 0); }
   to { opacity: 1; transform: none; clip-path: inset(0 0 0 0 round 10px 10px 0 0); }
+}
+
+@keyframes shine {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(120%); }
+}
+
+/* Menos movimiento (ver index.css): lo que entraba moviéndose ahora solo se
+   funde, y lo que se movía por su cuenta (el pulpo que flota o saluda, los
+   latidos y los brillos) se queda quieto. El aro de carga sigue girando porque
+   indica que algo está pasando. */
+@media (prefers-reduced-motion: reduce) {
+  @keyframes rise-in { from { opacity: 0; } }
+  @keyframes fade-down { from { opacity: 0; } }
+  @keyframes pop-in { from { opacity: 0; } }
+  @keyframes icon-in { from { opacity: 0; } }
+  @keyframes dialog-in { from { opacity: 0; } }
+  @keyframes dialog-out { to { opacity: 0; } }
+  @keyframes toast-in { from { opacity: 0; } }
+  @keyframes toast-out { to { opacity: 0; } }
+  @keyframes logo-in { from { opacity: 0; } }
+  @keyframes logo-intro { from { opacity: 0; } }
+  @keyframes badge-in { from { opacity: 0; } }
+  @keyframes tab-in { from { opacity: 0; } }
+  @keyframes logo-wave { }
+  @keyframes logo-float { }
+  @keyframes shadow-float { }
+  @keyframes dot-ping { }
+  @keyframes shine { }
 }
