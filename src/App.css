@@ -2175,7 +2175,9 @@ html {
   margin-block: 14px 4px;
 }
 
-.limit-form .field {
+/* El recuadro es angosto; la ayuda y el error usan todo el ancho (el error
+   del servidor nombra los días que no dejan bajar el límite). */
+.limit-form .field input {
   max-width: 220px;
 }
 
