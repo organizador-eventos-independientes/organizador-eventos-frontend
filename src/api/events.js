@@ -45,6 +45,8 @@ function subtaskToFrontend(data) {
     name: data.nombre,
     deadline: data.plazo,
     estimatedHours: data.horas_estimadas,
+    status: data.estado ?? 'Pendiente',
+    statusNote: data.nota_estado ?? '',
   }
 }
 
@@ -117,6 +119,30 @@ export const updateSubtask = async (eventId, subtaskId, data) => {
 
 export const deleteSubtask = (eventId, subtaskId) =>
   send(`/subtareas/${subtaskId}/`, { method: 'DELETE' })
+
+
+export const updateSubtaskStatus = async (subtaskId, { status, statusNote = '' }) => {
+  const response = await send(`/subtareas/${subtaskId}/estado/`, {
+    method: 'PATCH',
+    body: {
+      estado: status,
+      nota_estado: statusNote,
+    },
+  })
+
+  return subtaskToFrontend(response)
+}
+
+export const getEventProgress = async (eventId) => {
+  const data = await send(`/eventos/${eventId}/progreso/`)
+
+  return {
+    eventId: data.evento_id,
+    totalSubtasks: data.total_gestiones,
+    completedSubtasks: data.gestiones_hechas,
+    percentage: data.porcentaje,
+  }
+}
 
 // Conflicto por sobrecarga diaria (US-07) que devuelve el backend con un 409.
 function conflictToFrontend(data, message) {

@@ -336,6 +336,12 @@ export default function TodayPage() {
                           <span className="cap-text">{s.eventName}</span>
                         </span>
                         <p className="subtasks__name today-item__name">{s.name}</p>
+                        {s.status === 'Pospuesta' && (
+                          <p className="today-item__status">
+                          <strong>Pospuesta</strong>
+                          {s.statusNote && ` — ${s.statusNote}`}
+                          </p>
+                        )}
                         <p className="muted subtasks__meta today-item__meta">
                           <span className="today-group__when">{relativeDeadline(s.daysLeft)}</span>
                           <span>{formatDate(s.deadline)}</span>

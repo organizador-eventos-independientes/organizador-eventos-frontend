@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import SubtaskForm from './SubtaskForm'
 import ConfirmDialog from './ConfirmDialog'
-import { createSubtask, deleteSubtask, updateSubtask } from '../api/events'
+import { createSubtask, deleteSubtask, updateSubtask, updateSubtaskStatus, } from '../api/events'
 import { formatDate, formatHours, formatMinutes, toMinutes } from '../lib/format'
 import { useToast } from '../lib/toast'
 
@@ -14,6 +14,8 @@ export default function SubtaskSection({ eventId, eventDate, subtasks, onChange 
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [toDelete, setToDelete] = useState(null)
+  const [draftStatuses, setDraftStatuses] = useState({})
+  const [draftNotes, setDraftNotes] = useState({})
 
   // Se suma en minutos para que, p. ej., tres gestiones de 0:20 den 1 h exacta.
   const totalMinutes = subtasks.reduce((sum, s) => sum + toMinutes(s.estimatedHours || 0), 0)
@@ -36,6 +38,25 @@ export default function SubtaskSection({ eventId, eventDate, subtasks, onChange 
     onChange(subtasks.filter((s) => s.id !== toDelete.id))
     toast({ message: 'Gestión eliminada.' })
     setToDelete(null)
+  }
+  
+  async function handleStatusChange(subtask, status, statusNote) {
+    try {
+      const updated = await updateSubtaskStatus(subtask.id, {
+        status,
+        statusNote,
+      })
+
+      onChange(
+        subtasks.map((s) => (s.id === subtask.id ? { ...s, ...updated } : s)),
+      )
+
+      toast({ message: 'Estado de la gestión actualizado.' })
+    } catch (err) {
+      toast({
+        message: err.message || 'No se pudo actualizar el estado.',
+      })
+    }
   }
 
   return (
@@ -103,6 +124,51 @@ export default function SubtaskSection({ eventId, eventDate, subtasks, onChange 
                     <span>Plazo: {formatDate(s.deadline)}</span>
                     <span>{formatHours(s.estimatedHours)}</span>
                   </p>
+                  <div className="subtasks__status">
+                    <label htmlFor={`status-${s.id}`}>Estado</label>
+                    <select
+                      id={`status-${s.id}`}
+                      value={draftStatuses[s.id] ?? s.status ?? 'Pendiente'}
+                      onChange={(e) =>
+                        setDraftStatuses({
+                          ...draftStatuses,
+                          [s.id]: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="Pendiente">Pendiente</option>
+                      <option value="Hecha">Hecha</option>
+                      <option value="Pospuesta">Pospuesta</option>
+                    </select>
+
+                    <label htmlFor={`note-${s.id}`}>Nota (opcional)</label>
+                    <input
+                      id={`note-${s.id}`}
+                      type="text"
+                      placeholder="Escribe una nota..."
+                      value={draftNotes[s.id] ?? s.statusNote ?? ''}
+                      onChange={(e) =>
+                        setDraftNotes({
+                          ...draftNotes,
+                          [s.id]: e.target.value,
+                        })
+                      }
+                    />
+
+                    <button
+                      type="button"
+                      className="btn btn--small btn--primary"
+                      onClick={() =>
+                        handleStatusChange(
+                          s,
+                          draftStatuses[s.id] ?? s.status ?? 'Pendiente',
+                          draftNotes[s.id] ?? s.statusNote ?? '',
+                        )
+                      }
+                    >
+                      Guardar estado
+                    </button>
+                  </div>
                 </div>
                 <div className="subtasks__actions">
                   <button type="button" className="btn btn--small btn--ghost"

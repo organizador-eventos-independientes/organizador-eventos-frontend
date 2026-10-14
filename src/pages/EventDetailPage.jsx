@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import EventForm from '../components/EventForm'
 import ConfirmDialog from '../components/ConfirmDialog'
 import SubtaskSection from '../components/SubtaskSection'
-import { deleteEvent, getEvent, listSubtasks, updateEvent } from '../api/events'
+import { deleteEvent, getEvent, listSubtasks, updateEvent, getEventProgress, } from '../api/events'
 import { eventTypeLabel } from '../lib/validation'
 import { formatDateTime } from '../lib/format'
 import { useToast } from '../lib/toast'
@@ -18,18 +18,40 @@ export default function EventDetailPage() {
   const [loadError, setLoadError] = useState(null)
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [progress, setProgress] = useState(null)
+
+  const refreshProgress = useCallback(async () => {
+    try {
+      const data = await getEventProgress(id)
+      setProgress(data)
+    } catch {
+      setProgress(null)
+    }
+  }, [id])
 
   const load = useCallback(async () => {
     setLoadError(null)
     setEvent(null)
+
     try {
-      const [ev, subs] = await Promise.all([getEvent(id), listSubtasks(id)])
+      const [ev, subs] = await Promise.all([
+        getEvent(id),
+        listSubtasks(id),
+      ])
+
       setEvent(ev)
       setSubtasks(subs ?? [])
+
+      await refreshProgress()
     } catch (err) {
       setLoadError(err)
     }
-  }, [id])
+  }, [id, refreshProgress])
+
+  const handleSubtasksChange = useCallback((updatedSubtasks) => {
+    setSubtasks(updatedSubtasks)
+    refreshProgress()
+  }, [refreshProgress])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial de datos
@@ -111,7 +133,42 @@ export default function EventDetailPage() {
         </section>
       </div>
 
-      <SubtaskSection eventId={id} eventDate={event.date} subtasks={subtasks} onChange={setSubtasks} />
+      {progress && (
+        <section className="card event-progress" aria-labelledby="progress-title">
+          <div className="event-progress__header">
+            <h2 id="progress-title" className="event-progress__title">
+              Progreso del evento
+            </h2>
+
+            <strong className="event-progress__percentage">
+              {progress.percentage}%
+            </strong>
+          </div>
+
+          <div
+            className="event-progress__track"
+            role="progressbar"
+            aria-label="Progreso del evento"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Number(progress.percentage) || 0}
+          >
+            <div
+              className="event-progress__fill"
+              style={{
+                width: `${Math.min(100, Math.max(0, Number(progress.percentage) || 0))}%`,
+              }}
+            />
+          </div>
+
+          <p className="event-progress__summary">
+            {progress.completedSubtasks} de {progress.totalSubtasks} gestiones completadas
+          </p>
+        </section>
+      )}
+
+
+      <SubtaskSection eventId={id} eventDate={event.date} subtasks={subtasks} onChange={handleSubtasksChange} />
 
       <ConfirmDialog
         open={confirmDelete}

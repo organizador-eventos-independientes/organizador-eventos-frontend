@@ -21,19 +21,27 @@ function byDeadlineThenEffort(a, b) {
 
 // Devuelve { overdue, today, upcoming }: fecha anterior a hoy, igual a hoy y
 // posterior a hoy (US-04, escenario 1).
+
 export function groupSubtasks(subtasks, todayYmd) {
   const groups = { overdue: [], today: [], upcoming: [] }
 
   for (const s of subtasks) {
+    // Las gestiones completadas ya no cuentan como pendientes.
+    if (s.status === 'Hecha') continue
+
     const deadline = s.deadline.slice(0, 10)
     const diff = daysBetween(todayYmd, deadline)
     const item = { ...s, deadline, daysLeft: diff }
+
     if (diff < 0) groups.overdue.push(item)
     else if (diff === 0) groups.today.push(item)
     else groups.upcoming.push(item)
   }
 
-  for (const list of Object.values(groups)) list.sort(byDeadlineThenEffort)
+  for (const list of Object.values(groups)) {
+    list.sort(byDeadlineThenEffort)
+  }
+
   return groups
 }
 
