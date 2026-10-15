@@ -9,6 +9,7 @@ import EventCreatePage from './pages/EventCreatePage'
 import EventDetailPage from './pages/EventDetailPage'
 import TodayPage from './pages/TodayPage'
 import SettingsPage from './pages/SettingsPage'
+import ProgressPage from './pages/ProgressPage'
 import './App.css'
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
             <Route element={<RequireAuth />}>
               <Route path="/" element={<Navigate to="/eventos" replace />} />
               <Route path="/hoy" element={<TodayPage />} />
+              <Route path="/progreso" element={<ProgressPage />} />
               <Route path="/eventos" element={<EventListPage />} />
               <Route path="/eventos/nuevo" element={<EventCreatePage />} />
               <Route path="/crear" element={<Navigate to="/eventos/nuevo" replace />} />

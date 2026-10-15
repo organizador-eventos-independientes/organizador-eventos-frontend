@@ -78,6 +78,7 @@ export default function TopBar() {
         <nav className="topbar__nav" aria-label="Principal">
           <NavLink to="/hoy" className="topbar__link">Hoy</NavLink>
           <NavLink to="/eventos" className="topbar__link">Mis eventos</NavLink>
+          <NavLink to="/progreso" className="topbar__link">Progreso</NavLink>
         </nav>
       )}
       <div className="topbar__end">
