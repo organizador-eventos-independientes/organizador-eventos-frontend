@@ -156,13 +156,18 @@ function ProgressPage() {
 
   // Normalizar el estado para comparar sin problemas de mayúsculas.
   const getTaskStatus = (task) =>
-    String(task.status ?? 'Pospuesta')
+    String(task.status ?? 'Pendiente')
       .trim()
       .toLowerCase()
 
   // Gestiones completadas.
   const completedStatusTasks = allSubtasks.filter(
     (task) => getTaskStatus(task) === 'hecha',
+  ).length
+
+  // Gestiones pendientes.
+  const pendingTasks = allSubtasks.filter(
+    (task) => getTaskStatus(task) === 'pendiente',
   ).length
 
   // Gestiones pospuestas.
@@ -270,6 +275,12 @@ function ProgressPage() {
                     <span aria-hidden="true">✓</span>
                     Completadas:{' '}
                     <strong>{completedStatusTasks}</strong>
+                  </span>
+
+                  <span className="progress-overview__badge progress-overview__badge--pending">
+                    <span aria-hidden="true">○</span>
+                    Pendientes:{' '}
+                    <strong>{pendingTasks}</strong>
                   </span>
 
                   <span className="progress-overview__badge progress-overview__badge--postponed">

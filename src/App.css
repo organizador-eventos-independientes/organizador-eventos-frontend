@@ -1873,18 +1873,19 @@ html {
 }
 
 /* ---------- Filas de la vista Hoy ----------
-   Cada fila (una gestión) es una rejilla: la etiqueta va en la esquina
-   superior derecha y el nombre, el detalle y los botones quedan pegados a la
-   izquierda, uno debajo de otro, en la misma línea vertical en toda la lista.
+   Cada fila (una gestión) es una rejilla: las etiquetas (evento y, debajo, el
+   estado) van en la esquina superior derecha y el nombre, el detalle, la nota
+   y los botones quedan pegados a la izquierda, uno debajo de otro, en la misma
+   línea vertical en toda la lista.
    Como habrá varios botones por fila (hasta 4), van en su propia línea para
    que el texto no se apriete. */
 .subtasks__item.today-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:
-    'name    type'
-    'meta    meta'
-    'postponed postponed'
+    'name    tags'
+    'meta    tags'
+    'note    note'
     'actions actions';
   align-items: center;
   gap: 4px 16px;
@@ -1894,21 +1895,27 @@ html {
   grid-area: meta;
 }
 
-.today-item__postponed {
-  grid-area: postponed;
+.today-item__actions,
+.today-item .subtasks__item--editing {
+  grid-area: actions;
 }
 
-.today-item__actions {
-  grid-area: actions;
+/* Etiquetas apiladas: el evento arriba y el estado justo debajo. */
+.today-item__tags {
+  grid-area: tags;
+  justify-self: end;
+  /* Arriba, a la altura de la primera línea del nombre aunque este ocupe dos. */
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  min-width: 0;
 }
 
 /* La etiqueta lleva el nombre del evento con el color de su tipo. Tiene un
    ancho máximo para que un nombre largo no le quite sitio al de la gestión. */
 .today-item__type {
-  grid-area: type;
-  justify-self: end;
-  /* Arriba, a la altura de la primera línea del nombre aunque este ocupe dos. */
-  align-self: start;
   max-width: min(14rem, 40vw);
   margin: 1px 0 0;
   padding: 6px 10px 6px 8px;
@@ -2070,6 +2077,26 @@ html {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 8px;
+}
+
+/* Conflicto del límite diario (US-12): cada día que lo impide con sus
+   gestiones y el botón para moverlas o reducirlas. */
+.conflict__days {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.conflict__subtask {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding-block: 2px;
 }
 
 .conflict__option {
@@ -2492,21 +2519,28 @@ html {
     padding: 12px;
   }
 
-  /* Hoy: la etiqueta del evento sube encima del nombre para que este use
-     todo el ancho de la fila. */
+  /* Hoy: las etiquetas (evento y, debajo, el estado) suben encima del nombre
+     para que este use todo el ancho de la fila. */
   .subtasks__item.today-item {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      'type'
+      'tags'
       'name'
       'meta'
+      'note'
       'actions';
   }
 
-  .today-item__type {
+  .today-item__tags {
     justify-self: start;
+    align-items: flex-start;
     max-width: 100%;
     margin: 0 0 4px;
+  }
+
+  .today-item__type {
+    max-width: 100%;
+    margin: 0;
   }
 
   /* Barra de filtros: los tres botones se estiran para llenar cada línea, con
@@ -3213,52 +3247,45 @@ html {
 }
 
 
-.today-item__postponed {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.today-item__postponed .today-item__status {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  padding: 6px 10px;
-  border: 1px solid color-mix(in srgb, #eab308 30%, var(--border));
-  border-radius: 999px;
-  background: color-mix(in srgb, #eab308 10%, var(--surface));
-  color: color-mix(in srgb, #eab308 75%, var(--text-h));
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.today-item__status-note {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  overflow-wrap: anywhere;
-}
-
+/* Etiqueta de estado de la gestión en Hoy, debajo de la del evento. */
 .today-item__status {
   display: inline-flex;
   align-items: center;
+  width: fit-content;
   padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--warning-bg);
-  color: var(--warning-text);
   border: 1px solid var(--border);
-  font-size: 0.8rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
   font-weight: 700;
   white-space: nowrap;
 }
 
+/* Pendiente: tonos neutros del tema */
+.today-item__status--pending {
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+
+/* Pospuesta: amarillo integrado con el tema */
+.today-item__status--postponed {
+  border-color: color-mix(in srgb, #eab308 30%, var(--border));
+  background: color-mix(in srgb, #eab308 10%, var(--surface));
+  color: color-mix(in srgb, #eab308 75%, var(--text-h));
+}
+
+/* Hecha: verde de éxito */
+.today-item__status--done {
+  border-color: color-mix(in srgb, var(--success) 30%, var(--border));
+  background: color-mix(in srgb, var(--success) 10%, var(--surface));
+  color: var(--success);
+}
+
 .today-item__status-note {
-  display: inline-flex;
-  align-items: center;
+  grid-area: note;
+  margin: 4px 0 0;
   color: var(--text-muted);
   font-size: 0.85rem;
+  overflow-wrap: anywhere;
 }
 
 /* Ajuste del tamaño de los títulos de Progreso */

@@ -48,7 +48,8 @@ function parseFieldErrors(body) {
   }
   const result = {}
   for (const [key, value] of Object.entries(errors)) {
-    if (['message', 'error', 'detail', 'non_field_errors'].includes(key)) continue
+    // `conflicto` no es un campo: son los datos para resolver una sobrecarga.
+    if (['message', 'error', 'detail', 'non_field_errors', 'conflicto'].includes(key)) continue
     const field = FIELD_NAMES[key] ?? key
     result[field] ??= firstMessage(value)
   }

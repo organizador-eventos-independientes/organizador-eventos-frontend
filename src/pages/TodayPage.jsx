@@ -32,6 +32,9 @@ const GROUPS = [
   },
 ]
 
+// Clase de la etiqueta de estado de cada gestión.
+const STATUS_CLASS = { Pendiente: 'pending', Hecha: 'done', Pospuesta: 'postponed' }
+
 const countLabel = (n) => `${n} ${n === 1 ? 'gestión' : 'gestiones'}`
 
 // Solo las gestiones: los eventos no aparecen como filas propias.
@@ -102,7 +105,7 @@ export default function TodayPage() {
     setEditingStatusKey(item.key)
     setDraftStatuses((prev) => ({
       ...prev,
-      [item.key]: item.status === 'Hecha' ? 'Hecha' : 'Pospuesta',
+      [item.key]: item.status ?? 'Pendiente',
     }))
     setDraftNotes((prev) => ({
       ...prev,
@@ -126,7 +129,7 @@ export default function TodayPage() {
   }
 
   async function saveStatus(item) {
-    const status = draftStatuses[item.key] ?? item.status ?? 'Pospuesta'
+    const status = draftStatuses[item.key] ?? item.status ?? 'Pendiente'
     const note = draftNotes[item.key] ?? ''
 
     try {
@@ -146,8 +149,11 @@ export default function TodayPage() {
 
       setEditingStatusKey(null)
       toast({ message: 'Estado actualizado.' })
-    } catch {
-      toast({ message: 'No se pudo actualizar el estado. Inténtalo de nuevo.' })
+    } catch (err) {
+      // 400: el backend explica por qué (p. ej. reabrir una hecha en un día sin espacio).
+      toast({
+        message: err?.status === 400 && err.message ? err.message : 'No se pudo actualizar el estado. Inténtalo de nuevo.',
+      })
     }
   }
 
@@ -181,6 +187,17 @@ export default function TodayPage() {
     const { hours: dailyLimit } = await updateDailyLimit(hours)
     setData((d) => ({ ...d, dailyLimit }))
     toast({ message: 'Límite actualizado.' })
+  }
+
+  // Desde el conflicto del límite diario: abre "Reprogramar" en esa gestión
+  // para moverla o reducir sus horas. Si los filtros la ocultan, se limpian.
+  function rescheduleFromLimit(subtaskId) {
+    const item = data.items.find((it) => it.id === subtaskId)
+    if (!item) return
+    if (!shownGroups.some((g) => g.items.includes(item))) clearFilters()
+    setOpenPanel(null)
+    setEditingStatusKey(null)
+    startRescheduling(item)
   }
 
   // Filtros (US-05). Viven en la URL para conservarse al recargar la página; un
@@ -243,11 +260,20 @@ export default function TodayPage() {
           <Link to="/eventos/nuevo" className="btn btn--primary">Crear evento</Link>
         </div>
       ) : totalCount === 0 ? (
-        <div className="empty card">
-          <p className="empty__title">Aún no tienes gestiones</p>
-          <p className="muted">Agrega gestiones a tus eventos y aparecerán aquí ordenadas por fecha.</p>
-          <Link to="/eventos" className="btn btn--primary">Ver mis eventos</Link>
-        </div>
+        // Las hechas no aparecen en Hoy: si todas lo están, no queda nada por hacer.
+        data.items.length > 0 ? (
+          <div className="empty card">
+            <p className="empty__title">No tienes gestiones por hacer</p>
+            <p className="muted">Todas tus gestiones están hechas. Las nuevas que agregues aparecerán aquí.</p>
+            <Link to="/eventos" className="btn btn--primary">Ver mis eventos</Link>
+          </div>
+        ) : (
+          <div className="empty card">
+            <p className="empty__title">Aún no tienes gestiones</p>
+            <p className="muted">Agrega gestiones a tus eventos y aparecerán aquí ordenadas por fecha.</p>
+            <Link to="/eventos" className="btn btn--primary">Ver mis eventos</Link>
+          </div>
+        )
       ) : (
         <>
           {/* Todo plegado por defecto para no abrumar. "Filtros" y "¿Cómo se ordena
@@ -319,6 +345,7 @@ export default function TodayPage() {
               role="region" aria-labelledby="limit-toggle" inert={openPanel !== 'limit'}>
               <div className="filters__panel-inner">
                 <DailyLimitForm idPrefix="today" limit={data.dailyLimit} onSave={saveDailyLimit}
+                  onReschedule={rescheduleFromLimit}
                   description="Sumamos las horas de las gestiones de todos tus eventos. Si al reprogramar una gestión un día pasa de este límite, te avisamos antes de guardar." />
               </div>
             </div>
@@ -387,26 +414,25 @@ export default function TodayPage() {
                       <li key={s.key}
                         className={`subtasks__item today-item${reschedulingKey === s.key ? ' today-item--rescheduling' : ''}${movedKey === s.key ? ' today-item--moved' : ''}`}
                         onAnimationEnd={(e) => e.animationName === 'moved-flash' && setMovedKey(null)}>
-                        {/* La etiqueta es el evento de la gestión, con el color de su tipo. */}
-                        <span className={`badge badge--${s.eventType} today-item__type`} title={s.eventName}>
-                          <span className="cap-text">{s.eventName}</span>
-                        </span> 
-                        <p className="subtasks__name">{s.name}</p>
+                        {/* Etiquetas: el evento de la gestión, con el color de su tipo, y
+                            debajo su estado. */}
+                        <div className="today-item__tags">
+                          <span className={`badge badge--${s.eventType} today-item__type`} title={s.eventName}>
+                            <span className="cap-text">{s.eventName}</span>
+                          </span>
+                          <span className={`today-item__status today-item__status--${STATUS_CLASS[s.status] ?? 'pending'}`}>
+                            {s.status ?? 'Pendiente'}
+                          </span>
+                        </div>
+                        <p className="subtasks__name today-item__name">{s.name}</p>
                         <p className="muted subtasks__meta today-item__meta">
                           <span className="today-group__when">{relativeDeadline(s.daysLeft)}</span>
                           <span>{formatDate(s.deadline)}</span>
                           <span>{formatHours(s.estimatedHours)}</span>
-                        </p>     
-                        {s.status === 'Pospuesta' && (
-                          <div className="today-item__postponed">
-                            <span className="today-item__status">Pospuesta</span>
-                            {s.statusNote && (
-                              <span className="today-item__status-note">
-                                {s.statusNote}
-                              </span>
-                            )}
-                          </div>
-                        )}         
+                        </p>
+                        {s.statusNote && (
+                          <p className="today-item__status-note">{s.statusNote}</p>
+                        )}
                         {reschedulingKey === s.key ? (
                           <RescheduleForm
                             idPrefix={s.key}
@@ -420,7 +446,7 @@ export default function TodayPage() {
                               <label htmlFor={`estado-${s.key}`}>Estado</label>
                               <select
                                 id={`estado-${s.key}`}
-                                value={draftStatuses[s.key] ?? s.status ?? 'Pospuesta'}
+                                value={draftStatuses[s.key] ?? s.status ?? 'Pendiente'}
                                 onChange={(e) =>
                                   setDraftStatuses((prev) => ({
                                     ...prev,
@@ -428,6 +454,7 @@ export default function TodayPage() {
                                   }))
                                 }
                               >
+                                <option value="Pendiente">Pendiente</option>
                                 <option value="Hecha">Hecha</option>
                                 <option value="Pospuesta">Pospuesta</option>
                               </select>

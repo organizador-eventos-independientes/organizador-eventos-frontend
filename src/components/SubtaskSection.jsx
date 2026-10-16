@@ -132,7 +132,7 @@ export default function SubtaskSection({ eventId, eventDate, subtasks, onChange 
                         <label htmlFor={`status-${s.id}`}>Estado</label>
                         <select
                           id={`status-${s.id}`}
-                          value={draftStatuses[s.id] ?? s.status ?? 'Pospuesta'}
+                          value={draftStatuses[s.id] ?? s.status ?? 'Pendiente'}
                           onChange={(e) =>
                             setDraftStatuses({
                               ...draftStatuses,
@@ -140,6 +140,7 @@ export default function SubtaskSection({ eventId, eventDate, subtasks, onChange 
                             })
                           }
                         >
+                          <option value="Pendiente">Pendiente</option>
                           <option value="Hecha">Hecha</option>
                           <option value="Pospuesta">Pospuesta</option>
                         </select>
@@ -167,7 +168,7 @@ export default function SubtaskSection({ eventId, eventDate, subtasks, onChange 
                         onClick={async () => {
                           await handleStatusChange(
                             s,
-                            draftStatuses[s.id] ?? s.status ?? 'Pospuesta',
+                            draftStatuses[s.id] ?? s.status ?? 'Pendiente',
                             draftNotes[s.id] ?? s.statusNote ?? '',
                           )
                           setEditingStatusId(null)

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import DurationInput from './DurationInput'
 import Field from './Field'
+import OverloadConflict from './OverloadConflict'
 import { validateSubtask } from '../lib/validation'
 import { formatDate, parseDuration, toDurationText, toHours, todayYmd } from '../lib/format'
 
@@ -16,7 +17,8 @@ function toFormValues(subtask) {
 
 // Formulario inline de gestión logística. Si `onSubmit` falla se conservan
 // los valores ingresados y se muestra el error. `eventDate` (fecha del evento)
-// es el último día permitido para el plazo.
+// es el último día permitido para el plazo. Si ese día pasa del límite diario,
+// se muestran las mismas opciones para resolverlo que al reprogramar en Hoy.
 export default function SubtaskForm({
   idPrefix, initialSubtask, eventDate, submitLabel, onSubmit, onCancel, resetOnSuccess = false,
 }) {
@@ -25,23 +27,26 @@ export default function SubtaskForm({
   const [submitted, setSubmitted] = useState(false)
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState('')
+  const [conflict, setConflict] = useState(null)
   const formRef = useRef(null)
+
+  const input = (name) => formRef.current?.querySelector(`[name="${name}"]`)
 
   function update(field, value) {
     const next = { ...values, [field]: value }
     setValues(next)
+    setConflict(null) // el conflicto era del plazo y las horas anteriores
     if (submitted) setErrors(validateSubtask(next, initialSubtask, eventDate))
   }
 
   function focusFirstError(errs) {
     const first = FIELD_ORDER.find((f) => errs[f])
-    if (first) formRef.current?.querySelector(`[name="${first}"]`)?.focus()
+    if (first) input(first)?.focus()
   }
 
-  async function handleSubmit(e) {
+  function handleSubmit(e) {
     e.preventDefault()
     setSubmitted(true)
-    setFormError('')
 
     const errs = validateSubtask(values, initialSubtask, eventDate)
     setErrors(errs)
@@ -50,20 +55,28 @@ export default function SubtaskForm({
       return
     }
 
+    save({ deadline: values.deadline, estimatedHours: toHours(parseDuration(values.estimatedHours)) })
+  }
+
+  // `changes`: { deadline, estimatedHours }
+  async function save(changes) {
     setBusy(true)
+    setFormError('')
+    setConflict(null)
     try {
-      await onSubmit({
-        name: values.name.trim(),
-        deadline: values.deadline,
-        estimatedHours: toHours(parseDuration(values.estimatedHours)),
-      })
+      await onSubmit({ name: values.name.trim(), ...changes })
       if (resetOnSuccess) {
         setValues(toFormValues(null))
         setSubmitted(false)
         setErrors({})
-        formRef.current?.querySelector('[name="name"]')?.focus()
+        input('name')?.focus()
       }
     } catch (err) {
+      if (err?.conflict) {
+        setErrors({})
+        setConflict(err.conflict)
+        return
+      }
       const serverErrors = err?.fieldErrors ?? {}
       if (Object.keys(serverErrors).length) {
         setErrors(serverErrors)
@@ -77,6 +90,27 @@ export default function SubtaskForm({
     } finally {
       setBusy(false)
     }
+  }
+
+  // Opciones del conflicto (US-08), las mismas que al reprogramar en Hoy.
+  function moveToAnotherDay() {
+    const deadlineInput = input('deadline')
+    deadlineInput?.focus()
+    try {
+      deadlineInput?.showPicker()
+    } catch {
+      // Sin soporte para abrir el calendario: basta con el foco en el campo.
+    }
+  }
+
+  function reduceHours() {
+    setValues((v) => ({ ...v, estimatedHours: toDurationText(conflict.availableHours) }))
+    save({ deadline: conflict.date, estimatedHours: conflict.availableHours })
+  }
+
+  function postpone() {
+    setValues((v) => ({ ...v, deadline: conflict.nextFreeDate }))
+    save({ deadline: conflict.nextFreeDate, estimatedHours: conflict.hours })
   }
 
   return (
@@ -109,6 +143,10 @@ export default function SubtaskForm({
           )}
         </Field>
       </div>
+      {conflict && (
+        <OverloadConflict conflict={conflict} busy={busy}
+          onMove={moveToAnotherDay} onReduce={reduceHours} onPostpone={postpone} />
+      )}
       <div className="form__actions">
         <button type="button" className="btn btn--ghost" onClick={onCancel} disabled={busy}>
           Cancelar
