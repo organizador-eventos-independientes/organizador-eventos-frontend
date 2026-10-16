@@ -185,7 +185,7 @@ function ProgressPage() {
   ).length
 
   return (
-    <section className="page progress-page">
+    <section className="page">
       <header className="page__header">
         <div>
           <h1 className="page__title">
@@ -203,7 +203,7 @@ function ProgressPage() {
           </span>
 
           <h2 className="empty__title">
-            Tu próxima aventura comienza aquí
+            Aún no tienes eventos
           </h2>
 
           <p className="muted">

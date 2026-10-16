@@ -1624,8 +1624,39 @@ html {
   font-size: 0.9rem;
 }
 
+/* Lista de estados igual a la de los filtros (.field select): la nativa, en
+   tema oscuro, se pinta en blanco al pasar el cursor. Flecha propia con el
+   color del tema, que se tiñe de morado al pasar el cursor o enfocar. Va
+   después de `background:` de arriba, que si no borraría la flecha. */
 .subtasks__status select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 40px;
+  background-image: var(--select-arrow);
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 12px 8px;
   cursor: pointer;
+  transition:
+    border-color var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out),
+    background-color var(--dur) var(--ease-out);
+}
+
+.subtasks__status select option {
+  background: var(--surface);
+  color: var(--text-h);
+}
+
+@media (hover: hover) {
+  .subtasks__status select:hover {
+    border-color: var(--border-strong);
+    background-image: var(--select-arrow-hi);
+  }
+}
+
+.subtasks__status select:focus {
+  background-image: var(--select-arrow-hi);
 }
 
 .subtasks__status select:focus,
@@ -2737,15 +2768,9 @@ html {
   @keyframes shine { }
 }
 
-.progress-page {
-  max-width: 1200px;
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  margin: 0 auto;
-  padding: 0 24px;
-}
-
+/* ---------- Progreso ----------
+   Mismas medidas que el resto de módulos: el ancho de .page, los títulos de
+   .page__title y .card__title, y el relleno, el borde y la sombra de .card. */
 .progress-eyebrow {
   display: inline-block;
   margin-bottom: 8px;
@@ -2770,7 +2795,7 @@ html {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  padding: 28px;
+  padding: 24px;
   border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
   border-radius: var(--radius);
   background:
@@ -2799,16 +2824,17 @@ html {
 
 .progress-overview__top h2 {
   margin-top: 6px;
+  margin-bottom: 8px;
   color: var(--text-h);
-  font-size: 1.2rem;
+  font-size: 1.25rem;
 }
 
+/* El mismo tamaño que el porcentaje del detalle del evento. */
 .progress-overview__percentage {
   flex: none;
   color: var(--accent-text);
-  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-size: 1.5rem;
   font-weight: 800;
-  letter-spacing: -0.06em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -2938,7 +2964,6 @@ html {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   width: 100%;
-  margin-top: 28px;
 }
 
 .progress-card {
@@ -2980,13 +3005,12 @@ html {
   padding-top: 3px;
 }
 
-/* Nombre del evento */
+/* Nombre del evento: el mismo tamaño que en las tarjetas de Mis eventos. */
 .progress-card__name h3 {
   color: var(--text-h);
-  font-size: 1.15rem;
-  font-weight: 750;
+  font-size: 1.1rem;
+  font-weight: 700;
   line-height: 1.4;
-  letter-spacing: -0.02em;
   margin: 0;
 }
 
@@ -3031,64 +3055,27 @@ html {
 /* ===== Acabado visual de la página de progreso ===== */
 
 .progress-overview__main {
-  padding: 32px;
   border-color: color-mix(in srgb, var(--accent) 18%, var(--border));
-  border-radius: 20px;
-  box-shadow: 0 8px 28px rgba(20, 20, 40, 0.05);
-}
-
-.progress-overview__top h2 {
-  margin-bottom: 8px;
-  font-size: 1.45rem;
-  font-weight: 750;
-  letter-spacing: -0.035em;
-}
-
-.progress-overview__percentage {
-  font-size: clamp(2.2rem, 4vw, 3rem);
-  letter-spacing: -0.07em;
 }
 
 .progress-overview__track,
 .progress-card__bar {
-  height: 9px;
   border: none;
   box-shadow: none;
 }
 
-.progress-list {
-  gap: 22px;
-  margin-top: 28px;
-}
-
 .progress-card {
-  min-width: 0;
-  box-sizing: border-box;
-  padding: 18px 26px;
-  border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
-  border-radius: 18px;
-  background: var(--surface);
-  box-shadow: 0 5px 18px rgba(20, 20, 40, 0.045);
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 
 .progress-card:hover {
   transform: translateY(-3px);
   border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
-  box-shadow: 0 10px 26px rgba(20, 20, 40, 0.08);
-}
-
-.progress-card__name h3 {
-  color: var(--text-h);
-  font-size: 1.05rem;
-  font-weight: 750;
-  line-height: 1.4;
-  letter-spacing: -0.02em;
 }
 
 .progress-card__name p {
   margin-top: 4px;
-  font-size: 0.84rem;
+  font-size: 0.85rem;
 }
 
 .progress-card__numbers {
@@ -3097,9 +3084,8 @@ html {
 
 .progress-card__numbers strong {
   color: var(--accent-text);
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 800;
-  letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -3107,7 +3093,7 @@ html {
   padding-top: 16px;
   border-top: 1px solid var(--border);
   color: var(--text-muted);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   line-height: 1.6;
 }
 
@@ -3143,13 +3129,11 @@ html {
   color: var(--accent-text);
 }
 
-@media (max-width: 700px) {
-  .progress-overview__main {
-    padding: 22px;
-  }
-
+/* En celulares, el mismo relleno que .card. */
+@media (max-width: 640px) {
+  .progress-overview__main,
   .progress-card {
-    padding: 22px;
+    padding: 16px;
   }
 }
 
@@ -3175,12 +3159,11 @@ html {
 
 /* ===== Barra de progreso dentro del detalle del evento ===== */
 
+/* Es una .card: toma de ella el relleno y la separación con el resto. */
 .event-progress {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-top: 20px;
-  padding: 24px;
 }
 
 .event-progress__header {
@@ -3190,11 +3173,11 @@ html {
   gap: 16px;
 }
 
+/* Como los demás títulos de tarjeta (.card__title). */
 .event-progress__title {
   margin: 0;
   color: var(--text-h);
-  font-size: 1.1rem;
-  font-weight: 750;
+  font-size: 1.25rem;
 }
 
 .event-progress__percentage {
@@ -3230,20 +3213,6 @@ html {
   margin: 0;
   color: var(--text-muted);
   font-size: 0.9rem;
-}
-
-@media (max-width: 480px) {
-  .event-progress {
-    padding: 18px;
-  }
-
-  .event-progress__title {
-    font-size: 1rem;
-  }
-
-  .event-progress__percentage {
-    font-size: 1.25rem;
-  }
 }
 
 
@@ -3286,16 +3255,6 @@ html {
   color: var(--text-muted);
   font-size: 0.85rem;
   overflow-wrap: anywhere;
-}
-
-/* Ajuste del tamaño de los títulos de Progreso */
-
-.progress-page .page__title {
-  font-size: 2.2rem;
-}
-
-.progress-overview__top h2 {
-  font-size: 1.65rem;
 }
 
 /* El formulario de estado ocupa todo el ancho de la gestión */

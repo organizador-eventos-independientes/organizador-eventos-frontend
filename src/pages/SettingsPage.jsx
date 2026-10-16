@@ -37,7 +37,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="page page--narrow">
+    <div className="page">
       <header className="page__header">
         <div>
           <h1 className="page__title">Configuración</h1>

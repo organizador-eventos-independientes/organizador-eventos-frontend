@@ -235,7 +235,7 @@ export default function TodayPage() {
   const shownCount = shownGroups.reduce((n, g) => n + g.items.length, 0)
 
   return (
-    <div className="page page--narrow">
+    <div className="page">
       <header className="page__header">
         <div>
           <h1 className="page__title">Hoy</h1>
