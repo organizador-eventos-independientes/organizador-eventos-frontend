@@ -26,7 +26,7 @@ export function groupSubtasks(subtasks, todayYmd) {
   const groups = { overdue: [], today: [], upcoming: [] }
 
   for (const s of subtasks) {
-    // Las gestiones completadas ya no cuentan como pendientes.
+    // Las gestiones completadas ya no se invluyen en la agenda
     if (s.status === 'Hecha') continue
 
     const deadline = s.deadline.slice(0, 10)

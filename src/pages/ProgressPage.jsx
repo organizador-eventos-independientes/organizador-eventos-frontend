@@ -153,9 +153,10 @@ function ProgressPage() {
     String(now.getDate()).padStart(2, '0'),
   ].join('-')
 
+
   // Normalizar el estado para comparar sin problemas de mayúsculas.
   const getTaskStatus = (task) =>
-    String(task.status ?? 'Pendiente')
+    String(task.status ?? 'Pospuesta')
       .trim()
       .toLowerCase()
 
@@ -170,46 +171,21 @@ function ProgressPage() {
   ).length
 
   // Gestiones vencidas: tienen una fecha anterior a hoy
-  // y no están completadas ni pospuestas.
-  const overdueTasks = allSubtasks.filter((task) => {
-    const status = getTaskStatus(task)
-
-    return (
-      status !== 'hecha' &&
-      status !== 'pospuesta' &&
+  // y todavía no están completadas.
+  const overdueTasks = allSubtasks.filter(
+    (task) =>
+      getTaskStatus(task) !== 'hecha' &&
       task.deadline &&
-      task.deadline < today
-    )
-  }).length
-
-  // Gestiones pendientes que todavía no están vencidas.
-  const pendingTasks = allSubtasks.filter((task) => {
-    const status = getTaskStatus(task)
-
-    const isOverdue =
-      status !== 'hecha' &&
-      status !== 'pospuesta' &&
-      task.deadline &&
-      task.deadline < today
-
-    return status === 'pendiente' && !isOverdue
-  }).length
+      task.deadline < today,
+  ).length
 
   return (
     <section className="page progress-page">
       <header className="page__header">
         <div>
-          <span className="progress-eyebrow">
-            ORGANIZACIÓN Y SEGUIMIENTO
-          </span>
-
           <h1 className="page__title">
             Progreso de los eventos
           </h1>
-
-          <p className="muted">
-            Cada gestión completada te acerca un paso más a tu objetivo.
-          </p>
         </div>
       </header>
 
@@ -255,13 +231,13 @@ function ProgressPage() {
                         : '¡Vas por buen camino!'}
                   </h2>
 
-                  <p className="muted">
-                    {overallPercentage === 0
-                      ? 'Empieza completando las primeras gestiones de tus eventos.'
-                      : overallPercentage === 100
-                        ? '¡Excelente trabajo! Has completado todas las gestiones.'
-                        : 'Sigue avanzando en la organización de tus eventos.'}
-                  </p>
+                  {overallPercentage !== 0 && (
+                    <p className="muted">
+                        {overallPercentage === 100
+                            ? '¡Excelente trabajo! Has completado todas las gestiones.'
+                            : 'Sigue avanzando en la organización de tus eventos.'}
+                    </p>
+                  )}
                 </div>
 
                 <div
@@ -294,12 +270,6 @@ function ProgressPage() {
                     <span aria-hidden="true">✓</span>
                     Completadas:{' '}
                     <strong>{completedStatusTasks}</strong>
-                  </span>
-
-                  <span className="progress-overview__badge progress-overview__badge--pending">
-                    <span aria-hidden="true">◷</span>
-                    Pendientes:{' '}
-                    <strong>{pendingTasks}</strong>
                   </span>
 
                   <span className="progress-overview__badge progress-overview__badge--postponed">

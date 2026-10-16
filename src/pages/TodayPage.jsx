@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import DailyLimitForm from '../components/DailyLimitForm'
 import RescheduleForm from '../components/RescheduleForm'
-import { getDailyLimit, listEventsWithSubtasks, rescheduleSubtask, updateDailyLimit } from '../api/events'
+import { getDailyLimit, listEventsWithSubtasks, rescheduleSubtask, updateDailyLimit, updateSubtaskStatus } from '../api/events'
 import { groupSubtasks, relativeDeadline } from '../lib/today'
 import { formatDate, formatHours, todayYmd } from '../lib/format'
 import { useToast } from '../lib/toast'
@@ -32,7 +32,7 @@ const GROUPS = [
   },
 ]
 
-const countLabel = (n) => `${n} ${n === 1 ? 'pendiente' : 'pendientes'}`
+const countLabel = (n) => `${n} ${n === 1 ? 'gestión' : 'gestiones'}`
 
 // Solo las gestiones: los eventos no aparecen como filas propias.
 const toItems = (subtasks) => subtasks.map((s) => ({ ...s, key: `gestion-${s.id}` }))
@@ -49,6 +49,9 @@ export default function TodayPage() {
   // Reprogramar (US-06): gestión con el formulario abierto y la última movida.
   const [reschedulingKey, setReschedulingKey] = useState(null)
   const [movedKey, setMovedKey] = useState(null)
+  const [editingStatusKey, setEditingStatusKey] = useState(null)
+  const [draftStatuses, setDraftStatuses] = useState({})
+  const [draftNotes, setDraftNotes] = useState({})  
   // Gestión cuyo botón "Reprogramar" recibe el foco tras el próximo render.
   const focusAfterRender = useRef(null)
 
@@ -93,6 +96,59 @@ export default function TodayPage() {
   function cancelRescheduling(item) {
     setReschedulingKey(null)
     focusAfterRender.current = item.key
+  }
+  
+  function startStatusEditing(item) {
+    setEditingStatusKey(item.key)
+    setDraftStatuses((prev) => ({
+      ...prev,
+      [item.key]: item.status === 'Hecha' ? 'Hecha' : 'Pospuesta',
+    }))
+    setDraftNotes((prev) => ({
+      ...prev,
+      [item.key]: item.statusNote ?? '',
+    }))
+    setReschedulingKey(null)
+  }
+
+  function cancelStatusEditing(item) {
+    setEditingStatusKey(null)
+    setDraftStatuses((prev) => {
+      const next = { ...prev }
+      delete next[item.key]
+      return next
+    })
+    setDraftNotes((prev) => {
+      const next = { ...prev }
+      delete next[item.key]
+      return next
+    })
+  }
+
+  async function saveStatus(item) {
+    const status = draftStatuses[item.key] ?? item.status ?? 'Pospuesta'
+    const note = draftNotes[item.key] ?? ''
+
+    try {
+      const updated = await updateSubtaskStatus(item.id, {
+        status,
+        statusNote: note,
+      })
+
+      setData((d) => ({
+        ...d,
+        items: d.items.map((it) =>
+          it.key === item.key
+            ? { ...it, ...updated }
+            : it,
+        ),
+      }))
+
+      setEditingStatusKey(null)
+      toast({ message: 'Estado actualizado.' })
+    } catch {
+      toast({ message: 'No se pudo actualizar el estado. Inténtalo de nuevo.' })
+    }
   }
 
   // Si falla o hay conflicto de sobrecarga (US-07), el error llega al
@@ -334,35 +390,107 @@ export default function TodayPage() {
                         {/* La etiqueta es el evento de la gestión, con el color de su tipo. */}
                         <span className={`badge badge--${s.eventType} today-item__type`} title={s.eventName}>
                           <span className="cap-text">{s.eventName}</span>
-                        </span>
-                        <p className="subtasks__name today-item__name">{s.name}</p>
-                        {s.status === 'Pospuesta' && (
-                          <p className="today-item__status">
-                          <strong>Pospuesta</strong>
-                          {s.statusNote && ` — ${s.statusNote}`}
-                          </p>
-                        )}
+                        </span> 
+                        <p className="subtasks__name">{s.name}</p>
                         <p className="muted subtasks__meta today-item__meta">
                           <span className="today-group__when">{relativeDeadline(s.daysLeft)}</span>
                           <span>{formatDate(s.deadline)}</span>
                           <span>{formatHours(s.estimatedHours)}</span>
-                        </p>
+                        </p>     
+                        {s.status === 'Pospuesta' && (
+                          <div className="today-item__postponed">
+                            <span className="today-item__status">Pospuesta</span>
+                            {s.statusNote && (
+                              <span className="today-item__status-note">
+                                {s.statusNote}
+                              </span>
+                            )}
+                          </div>
+                        )}         
                         {reschedulingKey === s.key ? (
                           <RescheduleForm
                             idPrefix={s.key}
                             subtask={s}
                             onSubmit={(deadline) => reschedule(s, deadline)}
                             onCancel={() => cancelRescheduling(s)}
-                          />
+                          />                        
+                        ) : editingStatusKey === s.key ? (
+                          <div className="subtasks__item--editing">
+                            <div className="subtasks__status">
+                              <label htmlFor={`estado-${s.key}`}>Estado</label>
+                              <select
+                                id={`estado-${s.key}`}
+                                value={draftStatuses[s.key] ?? s.status ?? 'Pospuesta'}
+                                onChange={(e) =>
+                                  setDraftStatuses((prev) => ({
+                                    ...prev,
+                                    [s.key]: e.target.value,
+                                  }))
+                                }
+                              >
+                                <option value="Hecha">Hecha</option>
+                                <option value="Pospuesta">Pospuesta</option>
+                              </select>
+                        
+                              <label htmlFor={`nota-${s.key}`}>Nota (opcional)</label>
+                              <input
+                                id={`nota-${s.key}`}
+                                type="text"
+                                placeholder="Escribe una nota..."
+                                value={draftNotes[s.key] ?? s.statusNote ?? ''}
+                                onChange={(e) =>
+                                  setDraftNotes((prev) => ({
+                                    ...prev,
+                                    [s.key]: e.target.value,
+                                  }))
+                                }
+                              />
+                            </div>
+                        
+                            <div className="subtasks__actions">
+                              <button
+                                type="button"
+                                className="btn btn--small btn--primary"
+                                onClick={() => saveStatus(s)}
+                              >
+                                Guardar cambios
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn--small btn--ghost"
+                                onClick={() => cancelStatusEditing(s)}
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
                         ) : (
                           <div className="today-item__actions">
-                            <Link to={`/evento/${s.eventId}`} className="btn btn--small btn--ghost"
-                              aria-label={`Ver evento ${s.eventName}`}>
+                            <Link
+                              to={`/evento/${s.eventId}`}
+                              className="btn btn--small btn--ghost"
+                              aria-label={`Ver evento ${s.eventName}`}
+                            >
                               Ver evento
                             </Link>
-                            <button type="button" id={`reprogramar-${s.key}`} className="btn btn--small btn--ghost"
-                              onClick={() => startRescheduling(s)} aria-label={`Reprogramar gestión ${s.name}`}>
+                        
+                            <button
+                              type="button"
+                              id={`reprogramar-${s.key}`}
+                              className="btn btn--small btn--ghost"
+                              onClick={() => startRescheduling(s)}
+                              aria-label={`Reprogramar gestión ${s.name}`}
+                            >
                               Reprogramar
+                            </button>
+                        
+                            <button
+                              type="button"
+                              className="btn btn--small btn--ghost"
+                              onClick={() => startStatusEditing(s)}
+                              aria-label={`Cambiar estado de la gestión ${s.name}`}
+                            >
+                              Estado
                             </button>
                           </div>
                         )}

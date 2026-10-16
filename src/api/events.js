@@ -45,10 +45,11 @@ function subtaskToFrontend(data) {
     name: data.nombre,
     deadline: data.plazo,
     estimatedHours: data.horas_estimadas,
-    status: data.estado ?? 'Pendiente',
+    status: data.estado === 'Hecha' ? 'Hecha' : 'Pospuesta',
     statusNote: data.nota_estado ?? '',
   }
 }
+
 
 // Eventos
 export const listEvents = async () => {

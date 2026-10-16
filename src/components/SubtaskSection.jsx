@@ -13,6 +13,7 @@ export default function SubtaskSection({ eventId, eventDate, subtasks, onChange 
   const { toast } = useToast()
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState(null)
+  const [editingStatusId, setEditingStatusId] = useState(null)
   const [toDelete, setToDelete] = useState(null)
   const [draftStatuses, setDraftStatuses] = useState({})
   const [draftNotes, setDraftNotes] = useState({})
@@ -118,69 +119,131 @@ export default function SubtaskSection({ eventId, eventDate, subtasks, onChange 
               </li>
             ) : (
               <li key={s.id} className="subtasks__item">
-                <div className="subtasks__main">
-                  <p className="subtasks__name">{s.name}</p>
-                  <p className="muted subtasks__meta">
-                    <span>Plazo: {formatDate(s.deadline)}</span>
-                    <span>{formatHours(s.estimatedHours)}</span>
-                  </p>
-                  <div className="subtasks__status">
-                    <label htmlFor={`status-${s.id}`}>Estado</label>
-                    <select
-                      id={`status-${s.id}`}
-                      value={draftStatuses[s.id] ?? s.status ?? 'Pendiente'}
-                      onChange={(e) =>
-                        setDraftStatuses({
-                          ...draftStatuses,
-                          [s.id]: e.target.value,
-                        })
-                      }
-                    >
-                      <option value="Pendiente">Pendiente</option>
-                      <option value="Hecha">Hecha</option>
-                      <option value="Pospuesta">Pospuesta</option>
-                    </select>
+                {editingStatusId === s.id ? (
+                  <div className="subtasks__item--editing">
+                    <div className="subtasks__main">
+                      <p className="subtasks__name">{s.name}</p>
+                      <p className="muted subtasks__meta">
+                        <span>Plazo: {formatDate(s.deadline)}</span>
+                        <span>{formatHours(s.estimatedHours)}</span>
+                      </p>
 
-                    <label htmlFor={`note-${s.id}`}>Nota (opcional)</label>
-                    <input
-                      id={`note-${s.id}`}
-                      type="text"
-                      placeholder="Escribe una nota..."
-                      value={draftNotes[s.id] ?? s.statusNote ?? ''}
-                      onChange={(e) =>
-                        setDraftNotes({
-                          ...draftNotes,
-                          [s.id]: e.target.value,
-                        })
-                      }
-                    />
+                      <div className="subtasks__status">
+                        <label htmlFor={`status-${s.id}`}>Estado</label>
+                        <select
+                          id={`status-${s.id}`}
+                          value={draftStatuses[s.id] ?? s.status ?? 'Pospuesta'}
+                          onChange={(e) =>
+                            setDraftStatuses({
+                              ...draftStatuses,
+                              [s.id]: e.target.value,
+                            })
+                          }
+                        >
+                          <option value="Hecha">Hecha</option>
+                          <option value="Pospuesta">Pospuesta</option>
+                        </select>
 
-                    <button
-                      type="button"
-                      className="btn btn--small btn--primary"
-                      onClick={() =>
-                        handleStatusChange(
-                          s,
-                          draftStatuses[s.id] ?? s.status ?? 'Pendiente',
-                          draftNotes[s.id] ?? s.statusNote ?? '',
-                        )
-                      }
-                    >
-                      Guardar estado
-                    </button>
+                        <label htmlFor={`note-${s.id}`}>Nota (opcional)</label>
+                        <input
+                          id={`note-${s.id}`}
+                          type="text"
+                          placeholder="Escribe una nota..."
+                          value={draftNotes[s.id] ?? s.statusNote ?? ''}
+                          onChange={(e) =>
+                            setDraftNotes({
+                              ...draftNotes,
+                              [s.id]: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="subtasks__actions">
+                      <button
+                        type="button"
+                        className="btn btn--small btn--primary"
+                        onClick={async () => {
+                          await handleStatusChange(
+                            s,
+                            draftStatuses[s.id] ?? s.status ?? 'Pospuesta',
+                            draftNotes[s.id] ?? s.statusNote ?? '',
+                          )
+                          setEditingStatusId(null)
+                        }}
+                      >
+                        Guardar cambios
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn btn--small btn--ghost"
+                        onClick={() => {
+                          setEditingStatusId(null)
+                          setDraftStatuses((prev) => {
+                            const next = { ...prev }
+                            delete next[s.id]
+                            return next
+                          })
+                          setDraftNotes((prev) => {
+                            const next = { ...prev }
+                            delete next[s.id]
+                            return next
+                          })
+                        }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div className="subtasks__actions">
-                  <button type="button" className="btn btn--small btn--ghost"
-                    onClick={() => { setEditingId(s.id); setAdding(false) }}
-                    aria-label={`Editar gestión ${s.name}`}>
-                    Editar
-                  </button>
-                  <button type="button" className="btn btn--small btn--ghost-danger"
-                    onClick={() => setToDelete(s)} aria-label={`Eliminar gestión ${s.name}`}>
-                    Eliminar
-                  </button>
-                </div>
+                ) : (
+                  <>
+                    <div className="subtasks__main">
+                      <p className="subtasks__name">{s.name}</p>
+                      <p className="muted subtasks__meta">
+                        <span>Plazo: {formatDate(s.deadline)}</span>
+                        <span>{formatHours(s.estimatedHours)}</span>
+                      </p>
+                    </div>
+
+                    <div className="subtasks__actions">
+                      <button
+                        type="button"
+                        className="btn btn--small btn--ghost"
+                        onClick={() => {
+                          setEditingStatusId(s.id)
+                          setEditingId(null)
+                          setAdding(false)
+                        }}
+                      >
+                        Estado
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn btn--small btn--ghost"
+                        onClick={() => {
+                          setEditingId(s.id)
+                          setEditingStatusId(null)
+                          setAdding(false)
+                        }}
+                        aria-label={`Editar gestión ${s.name}`}
+                      >
+                        Editar
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn btn--small btn--ghost-danger"
+                        onClick={() => setToDelete(s)}
+                        aria-label={`Eliminar gestión ${s.name}`}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </>
+                )}
               </li>
             ),
           )}

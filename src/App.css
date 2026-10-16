@@ -1884,9 +1884,22 @@ html {
   grid-template-areas:
     'name    type'
     'meta    meta'
+    'postponed postponed'
     'actions actions';
   align-items: center;
   gap: 4px 16px;
+}
+
+.today-item__meta {
+  grid-area: meta;
+}
+
+.today-item__postponed {
+  grid-area: postponed;
+}
+
+.today-item__actions {
+  grid-area: actions;
 }
 
 /* La etiqueta lleva el nombre del evento con el color de su tipo. Tiene un
@@ -3125,3 +3138,201 @@ html {
   max-width: 100%;
 }
 
+
+/* ===== Barra de progreso dentro del detalle del evento ===== */
+
+.event-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 24px;
+}
+
+.event-progress__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.event-progress__title {
+  margin: 0;
+  color: var(--text-h);
+  font-size: 1.1rem;
+  font-weight: 750;
+}
+
+.event-progress__percentage {
+  flex-shrink: 0;
+  color: var(--accent-text);
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.event-progress__track {
+  width: 100%;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.event-progress__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--accent),
+    color-mix(in srgb, var(--accent) 65%, #b9a3ff)
+  );
+  transition: width 450ms ease;
+}
+
+.event-progress__summary {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+  .event-progress {
+    padding: 18px;
+  }
+
+  .event-progress__title {
+    font-size: 1rem;
+  }
+
+  .event-progress__percentage {
+    font-size: 1.25rem;
+  }
+}
+
+
+.today-item__postponed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.today-item__postponed .today-item__status {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, #eab308 30%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, #eab308 10%, var(--surface));
+  color: color-mix(in srgb, #eab308 75%, var(--text-h));
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.today-item__status-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.today-item__status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.today-item__status-note {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* Ajuste del tamaño de los títulos de Progreso */
+
+.progress-page .page__title {
+  font-size: 2.2rem;
+}
+
+.progress-overview__top h2 {
+  font-size: 1.65rem;
+}
+
+/* El formulario de estado ocupa todo el ancho de la gestión */
+.subtasks__item--editing {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.subtasks__item--editing .subtasks__main {
+  width: 100%;
+  min-width: 0;
+}
+
+.subtasks__item--editing .subtasks__status {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.subtasks__item--editing .subtasks__status input,
+.subtasks__item--editing .subtasks__status select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Separar los campos de los botones al editar el estado */
+.subtasks__item--editing .subtasks__actions {
+  margin-top: 16px;
+}
+
+
+/* Formulario de estado de Hoy: misma simetría que en Eventos */
+.today-item--editing {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.today-status-editor {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.today-status-editor .field {
+  width: 100%;
+  min-width: 0;
+}
+
+.today-status-editor input,
+.today-status-editor select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.today-status-editor .subtasks__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* Quitar el fondo del contenedor al editar el estado en Hoy */
+.today-item .subtasks__item--editing {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
