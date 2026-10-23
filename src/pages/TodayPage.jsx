@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import DailyLimitForm from '../components/DailyLimitForm'
-import RescheduleForm from '../components/RescheduleForm'
+import SubtaskItem from '../components/SubtaskItem'
 import { getDailyLimit, listEventsWithSubtasks, rescheduleSubtask, updateDailyLimit, updateSubtaskStatus } from '../api/events'
-import { groupSubtasks, relativeDeadline } from '../lib/today'
-import { formatDate, formatHours, todayYmd } from '../lib/format'
+import { groupSubtasks, rescheduleMessage, statusMessage } from '../lib/today'
+import { formatHours, todayYmd } from '../lib/format'
 import { useToast } from '../lib/toast'
 
 // `status` es el valor del filtro por estado en la URL (?estado=...).
@@ -32,9 +32,6 @@ const GROUPS = [
   },
 ]
 
-// Clase de la etiqueta de estado de cada gestión.
-const STATUS_CLASS = { Pendiente: 'pending', Hecha: 'done', Pospuesta: 'postponed' }
-
 const countLabel = (n) => `${n} ${n === 1 ? 'gestión' : 'gestiones'}`
 
 // Solo las gestiones: los eventos no aparecen como filas propias.
@@ -49,13 +46,11 @@ export default function TodayPage() {
   // Panel desplegado de la barra de filtros: 'filters', 'rule', 'limit' o ninguno.
   const [openPanel, setOpenPanel] = useState(null)
   const [searchParams, setSearchParams] = useSearchParams()
-  // Reprogramar (US-06): gestión con el formulario abierto y la última movida.
-  const [reschedulingKey, setReschedulingKey] = useState(null)
+  // Formulario abierto en una fila ({ key, mode: 'reschedule' | 'postpone' }) y
+  // última gestión reprogramada (US-06), que se ilumina un momento.
+  const [openForm, setOpenForm] = useState(null)
   const [movedKey, setMovedKey] = useState(null)
-  const [editingStatusKey, setEditingStatusKey] = useState(null)
-  const [draftStatuses, setDraftStatuses] = useState({})
-  const [draftNotes, setDraftNotes] = useState({})  
-  // Gestión cuyo botón "Reprogramar" recibe el foco tras el próximo render.
+  // Id del botón ("Reprogramar" o "Posponer") que recibe el foco tras el próximo render.
   const focusAfterRender = useRef(null)
 
   const load = useCallback(async () => {
@@ -79,82 +74,45 @@ export default function TodayPage() {
     load()
   }, [load])
 
-  // Al cerrar el formulario el foco vuelve a "Reprogramar". Si la gestión cambió
-  // de grupo, además se desplaza la página hasta ella para ver a dónde fue.
+  // Al cerrar un formulario el foco vuelve al botón que lo abrió. Si la gestión
+  // cambió de grupo, además se desplaza la página hasta ella para ver a dónde
+  // fue. Una que pasa a hecha sale de Hoy y ya no tiene botón.
   useEffect(() => {
-    const key = focusAfterRender.current
-    if (!key) return
+    const id = focusAfterRender.current
+    if (!id) return
     focusAfterRender.current = null
-    const button = document.getElementById(`reprogramar-${key}`)
+    const button = document.getElementById(id)
     if (!button) return
     button.focus({ preventScroll: true })
     button.closest('li')?.scrollIntoView({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
   })
 
-  function startRescheduling(item) {
-    setReschedulingKey(item.key)
+  function openFormFor(item, mode) {
+    setOpenForm({ key: item.key, mode })
     setMovedKey(null)
   }
 
-  function cancelRescheduling(item) {
-    setReschedulingKey(null)
-    focusAfterRender.current = item.key
+  function closeForm(item, mode) {
+    focusAfterRender.current = `${mode === 'postpone' ? 'posponer' : 'reprogramar'}-${item.key}`
+    setOpenForm(null)
   }
-  
-  function startStatusEditing(item) {
-    setEditingStatusKey(item.key)
-    setDraftStatuses((prev) => ({
-      ...prev,
-      [item.key]: item.status ?? 'Pendiente',
+
+  // "Hecha" y "Pendiente" guardan al instante; "Posponer" llega desde su
+  // formulario, que se cierra. Si falla, el error se muestra en la fila o en
+  // el formulario. Una gestión hecha sale de Hoy.
+  async function saveStatus(item, changes) {
+    const updated = await updateSubtaskStatus(item.id, changes)
+    setData((d) => ({
+      ...d,
+      items: d.items.map((it) => (it.key === item.key ? { ...it, ...updated } : it)),
     }))
-    setDraftNotes((prev) => ({
-      ...prev,
-      [item.key]: item.statusNote ?? '',
-    }))
-    setReschedulingKey(null)
-  }
-
-  function cancelStatusEditing(item) {
-    setEditingStatusKey(null)
-    setDraftStatuses((prev) => {
-      const next = { ...prev }
-      delete next[item.key]
-      return next
+    if (changes.status === 'Pospuesta') closeForm(item, 'postpone')
+    toast({
+      message:
+        updated.status === 'Hecha'
+          ? 'Gestión marcada como hecha. Ya no aparece en Hoy; la sigues viendo en su evento.'
+          : statusMessage(updated.status),
     })
-    setDraftNotes((prev) => {
-      const next = { ...prev }
-      delete next[item.key]
-      return next
-    })
-  }
-
-  async function saveStatus(item) {
-    const status = draftStatuses[item.key] ?? item.status ?? 'Pendiente'
-    const note = draftNotes[item.key] ?? ''
-
-    try {
-      const updated = await updateSubtaskStatus(item.id, {
-        status,
-        statusNote: note,
-      })
-
-      setData((d) => ({
-        ...d,
-        items: d.items.map((it) =>
-          it.key === item.key
-            ? { ...it, ...updated }
-            : it,
-        ),
-      }))
-
-      setEditingStatusKey(null)
-      toast({ message: 'Estado actualizado.' })
-    } catch (err) {
-      // 400: el backend explica por qué (p. ej. reabrir una hecha en un día sin espacio).
-      toast({
-        message: err?.status === 400 && err.message ? err.message : 'No se pudo actualizar el estado. Inténtalo de nuevo.',
-      })
-    }
   }
 
   // Si falla o hay conflicto de sobrecarga (US-07), el error llega al
@@ -167,20 +125,9 @@ export default function TodayPage() {
         it.key === item.key ? { ...it, deadline: updated.deadline, estimatedHours: updated.estimatedHours } : it,
       ),
     }))
-    setReschedulingKey(null)
+    closeForm(item, 'reschedule')
     setMovedKey(item.key)
-    focusAfterRender.current = item.key
-
-    const dateChanged = updated.deadline !== item.deadline
-    const hours = formatHours(updated.estimatedHours)
-    toast({
-      message:
-        Number(updated.estimatedHours) === Number(item.estimatedHours)
-          ? 'Fecha actualizada.'
-          : dateChanged
-            ? `Fecha actualizada. Horas estimadas: ${hours}.`
-            : `Horas estimadas actualizadas: ${hours}.`,
-    })
+    toast({ message: rescheduleMessage(item, updated) })
   }
 
   async function saveDailyLimit(hours) {
@@ -196,8 +143,7 @@ export default function TodayPage() {
     if (!item) return
     if (!shownGroups.some((g) => g.items.includes(item))) clearFilters()
     setOpenPanel(null)
-    setEditingStatusKey(null)
-    startRescheduling(item)
+    openFormFor(item, 'reschedule')
   }
 
   // Filtros (US-05). Viven en la URL para conservarse al recargar la página; un
@@ -411,117 +357,25 @@ export default function TodayPage() {
                 ) : (
                   <ol className="subtasks">
                     {g.items.map((s) => (
-                      <li key={s.key}
-                        className={`subtasks__item today-item${reschedulingKey === s.key ? ' today-item--rescheduling' : ''}${movedKey === s.key ? ' today-item--moved' : ''}`}
-                        onAnimationEnd={(e) => e.animationName === 'moved-flash' && setMovedKey(null)}>
-                        {/* Etiquetas: el evento de la gestión, con el color de su tipo, y
-                            debajo su estado. */}
-                        <div className="today-item__tags">
-                          <span className={`badge badge--${s.eventType} today-item__type`} title={s.eventName}>
-                            <span className="cap-text">{s.eventName}</span>
-                          </span>
-                          <span className={`today-item__status today-item__status--${STATUS_CLASS[s.status] ?? 'pending'}`}>
-                            {s.status ?? 'Pendiente'}
-                          </span>
-                        </div>
-                        <p className="subtasks__name today-item__name">{s.name}</p>
-                        <p className="muted subtasks__meta today-item__meta">
-                          <span className="today-group__when">{relativeDeadline(s.daysLeft)}</span>
-                          <span>{formatDate(s.deadline)}</span>
-                          <span>{formatHours(s.estimatedHours)}</span>
-                        </p>
-                        {s.statusNote && (
-                          <p className="today-item__status-note">{s.statusNote}</p>
-                        )}
-                        {reschedulingKey === s.key ? (
-                          <RescheduleForm
-                            idPrefix={s.key}
-                            subtask={s}
-                            onSubmit={(deadline) => reschedule(s, deadline)}
-                            onCancel={() => cancelRescheduling(s)}
-                          />                        
-                        ) : editingStatusKey === s.key ? (
-                          <div className="subtasks__item--editing">
-                            <div className="subtasks__status">
-                              <label htmlFor={`estado-${s.key}`}>Estado</label>
-                              <select
-                                id={`estado-${s.key}`}
-                                value={draftStatuses[s.key] ?? s.status ?? 'Pendiente'}
-                                onChange={(e) =>
-                                  setDraftStatuses((prev) => ({
-                                    ...prev,
-                                    [s.key]: e.target.value,
-                                  }))
-                                }
-                              >
-                                <option value="Pendiente">Pendiente</option>
-                                <option value="Hecha">Hecha</option>
-                                <option value="Pospuesta">Pospuesta</option>
-                              </select>
-                        
-                              <label htmlFor={`nota-${s.key}`}>Nota (opcional)</label>
-                              <input
-                                id={`nota-${s.key}`}
-                                type="text"
-                                placeholder="Escribe una nota..."
-                                value={draftNotes[s.key] ?? s.statusNote ?? ''}
-                                onChange={(e) =>
-                                  setDraftNotes((prev) => ({
-                                    ...prev,
-                                    [s.key]: e.target.value,
-                                  }))
-                                }
-                              />
-                            </div>
-                        
-                            <div className="subtasks__actions">
-                              <button
-                                type="button"
-                                className="btn btn--small btn--primary"
-                                onClick={() => saveStatus(s)}
-                              >
-                                Guardar cambios
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn--small btn--ghost"
-                                onClick={() => cancelStatusEditing(s)}
-                              >
-                                Cancelar
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="today-item__actions">
-                            <Link
-                              to={`/evento/${s.eventId}`}
-                              className="btn btn--small btn--ghost"
-                              aria-label={`Ver evento ${s.eventName}`}
-                            >
-                              Ver evento
-                            </Link>
-                        
-                            <button
-                              type="button"
-                              id={`reprogramar-${s.key}`}
-                              className="btn btn--small btn--ghost"
-                              onClick={() => startRescheduling(s)}
-                              aria-label={`Reprogramar gestión ${s.name}`}
-                            >
-                              Reprogramar
-                            </button>
-                        
-                            <button
-                              type="button"
-                              className="btn btn--small btn--ghost"
-                              onClick={() => startStatusEditing(s)}
-                              aria-label={`Cambiar estado de la gestión ${s.name}`}
-                            >
-                              Estado
-                            </button>
-                          </div>
-                        )}
-                      </li>
+                      <SubtaskItem
+                        key={s.key}
+                        itemKey={s.key}
+                        subtask={s}
+                        showEvent
+                        openForm={openForm?.key === s.key ? openForm.mode : null}
+                        moved={movedKey === s.key}
+                        onOpenForm={(mode) => openFormFor(s, mode)}
+                        onCloseForm={(mode) => closeForm(s, mode)}
+                        onReschedule={(changes) => reschedule(s, changes)}
+                        onSaveStatus={(changes) => saveStatus(s, changes)}
+                        onMovedEnd={() => setMovedKey(null)}
+                        actionsBefore={
+                          <Link to={`/evento/${s.eventId}`} className="btn btn--small btn--ghost"
+                            aria-label={`Ver evento ${s.eventName}`}>
+                            Ver evento
+                          </Link>
+                        }
+                      />
                     ))}
                   </ol>
                 )}

@@ -1562,136 +1562,6 @@ html {
   font-size: 0.9rem;
 }
 
-.subtasks__actions {
-  display: flex;
-  gap: 8px;
-}
-
-/* Formulario horizontal de estado */
-.subtasks__status {
-  display: grid;
-  grid-template-columns: minmax(130px, 0.8fr) minmax(180px, 1.5fr) auto;
-  grid-template-rows: auto auto;
-  grid-template-areas:
-    "estado-label nota-label boton"
-    "estado-select nota-input boton";
-  align-items: center;
-  column-gap: 14px;
-  row-gap: 8px;
-  margin-top: 14px;
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface-2);
-}
-
-.subtasks__status label[for^="status-"] {
-  grid-area: estado-label;
-}
-
-.subtasks__status select {
-  grid-area: estado-select;
-}
-
-.subtasks__status label[for^="note-"] {
-  grid-area: nota-label;
-}
-
-.subtasks__status input {
-  grid-area: nota-input;
-}
-
-.subtasks__status label {
-  align-self: end;
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.subtasks__status select,
-.subtasks__status input {
-  width: 100%;
-  min-width: 0;
-  height: 42px;
-  box-sizing: border-box;
-  padding: 0 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--text-h);
-  font: inherit;
-  font-size: 0.9rem;
-}
-
-/* Lista de estados igual a la de los filtros (.field select): la nativa, en
-   tema oscuro, se pinta en blanco al pasar el cursor. Flecha propia con el
-   color del tema, que se tiñe de morado al pasar el cursor o enfocar. Va
-   después de `background:` de arriba, que si no borraría la flecha. */
-.subtasks__status select {
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: 40px;
-  background-image: var(--select-arrow);
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  background-size: 12px 8px;
-  cursor: pointer;
-  transition:
-    border-color var(--dur) var(--ease-out),
-    box-shadow var(--dur) var(--ease-out),
-    background-color var(--dur) var(--ease-out);
-}
-
-.subtasks__status select option {
-  background: var(--surface);
-  color: var(--text-h);
-}
-
-@media (hover: hover) {
-  .subtasks__status select:hover {
-    border-color: var(--border-strong);
-    background-image: var(--select-arrow-hi);
-  }
-}
-
-.subtasks__status select:focus {
-  background-image: var(--select-arrow-hi);
-}
-
-.subtasks__status select:focus,
-.subtasks__status input:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: var(--focus);
-}
-
-.subtasks__status button {
-  grid-area: boton;
-  align-self: end;
-  height: 42px;
-  margin: 0;
-  white-space: nowrap;
-}
-
-@media (max-width: 640px) {
-  .subtasks__status {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "estado-label"
-      "estado-select"
-      "nota-label"
-      "nota-input"
-      "boton";
-    gap: 8px;
-  }
-
-  .subtasks__status button {
-    width: 100%;
-    margin-top: 6px;
-  }
-}
-
 /* ---------- Dialog ----------
    Entra subiendo un poco y con el fondo difuminado; al cerrarse hace lo
    contrario, más rápido (ConfirmDialog añade .dialog--closing y espera a que
@@ -2001,6 +1871,20 @@ html {
   text-overflow: ellipsis;
 }
 
+/* Mientras se guarda "Hecha" o "Pendiente" los botones de estado no se
+   deshabilitan (perderían el foco): se atenúan y no responden. */
+.today-item__actions .btn[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* Si no se pudo cambiar el estado, el aviso va en su propia línea, encima de
+   los botones. */
+.today-item__error {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
 /* Late al aparecer y cada vez que cambia (TodayPage le da un key nuevo). */
 .today-group__count {
   color: var(--text-h);
@@ -2026,20 +1910,31 @@ html {
   color: var(--group-c);
 }
 
-/* ---------- Reprogramar una gestión (US-06) ----------
-   La fecha se cambia en la misma fila, que se tiñe como al editar. Al guardar,
-   la gestión pasa a su nuevo grupo y se ilumina un momento para que se vea a
-   dónde fue. */
-.subtasks__item.today-item--rescheduling {
+/* En el detalle del evento no hay grupos: la fecha relativa toma el mismo
+   color que tendría en Hoy (rojo si venció, verde si vence hoy). */
+.today-item__when--overdue {
+  color: var(--status-overdue);
+}
+
+.today-item__when--today {
+  color: var(--status-today);
+}
+
+/* ---------- Reprogramar o cambiar el estado de una gestión (US-06, US-09) ----------
+   Los dos formularios se abren en la misma fila, que se tiñe como al editar.
+   Al reprogramar, la gestión pasa a su nuevo grupo (o lugar de la lista) y se
+   ilumina un momento para que se vea a dónde fue. */
+.subtasks__item.today-item--editing {
   padding: 16px;
   background: var(--accent-bg);
 }
 
-.today-item--rescheduling::before {
+.today-item--editing::before {
   display: none;
 }
 
-.reschedule-form {
+.reschedule-form,
+.postpone-form {
   grid-area: actions;
   display: flex;
   flex-direction: column;
@@ -2053,6 +1948,11 @@ html {
   grid-template-columns: repeat(auto-fit, minmax(160px, 220px));
   gap: 12px 16px;
   align-items: start;
+}
+
+/* La nota al posponer: más ancha que la fecha, sin ocupar toda la fila. */
+.postpone-form .field {
+  max-width: 480px;
 }
 
 .reschedule-form__actions {
@@ -2522,16 +2422,15 @@ html {
     flex: 1 1 100%;
   }
 
-  :is(.form__actions, .dialog__actions, .reschedule-form__actions, .today-item__actions, .subtasks__actions, .event-head__actions) {
+  :is(.form__actions, .dialog__actions, .reschedule-form__actions, .today-item__actions, .event-head__actions) {
     flex-wrap: wrap;
   }
 
-  :is(.form__actions, .dialog__actions, .reschedule-form__actions, .today-item__actions, .subtasks__actions, .event-head__actions) > .btn {
+  :is(.form__actions, .dialog__actions, .reschedule-form__actions, .today-item__actions, .event-head__actions) > .btn {
     flex: 1 1 auto;
   }
 
-  .event-head__actions,
-  .subtasks__actions {
+  .event-head__actions {
     flex: 1 1 100%;
   }
 
@@ -2546,7 +2445,7 @@ html {
 
   .subtask-new,
   .subtasks__item--editing,
-  .subtasks__item.today-item--rescheduling {
+  .subtasks__item.today-item--editing {
     padding: 12px;
   }
 
@@ -3255,70 +3154,4 @@ html {
   color: var(--text-muted);
   font-size: 0.85rem;
   overflow-wrap: anywhere;
-}
-
-/* El formulario de estado ocupa todo el ancho de la gestión */
-.subtasks__item--editing {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.subtasks__item--editing .subtasks__main {
-  width: 100%;
-  min-width: 0;
-}
-
-.subtasks__item--editing .subtasks__status {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.subtasks__item--editing .subtasks__status input,
-.subtasks__item--editing .subtasks__status select {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* Separar los campos de los botones al editar el estado */
-.subtasks__item--editing .subtasks__actions {
-  margin-top: 16px;
-}
-
-
-/* Formulario de estado de Hoy: misma simetría que en Eventos */
-.today-item--editing {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.today-status-editor {
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-.today-status-editor .field {
-  width: 100%;
-  min-width: 0;
-}
-
-.today-status-editor input,
-.today-status-editor select {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.today-status-editor .subtasks__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-/* Quitar el fondo del contenedor al editar el estado en Hoy */
-.today-item .subtasks__item--editing {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 0;
 }

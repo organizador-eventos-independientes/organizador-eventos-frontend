@@ -1,25 +1,55 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import SubtaskForm from './SubtaskForm'
+import SubtaskItem from './SubtaskItem'
 import ConfirmDialog from './ConfirmDialog'
-import { createSubtask, deleteSubtask, updateSubtask, updateSubtaskStatus, } from '../api/events'
-import { formatDate, formatHours, formatMinutes, toMinutes } from '../lib/format'
+import { createSubtask, deleteSubtask, rescheduleSubtask, updateSubtask, updateSubtaskStatus } from '../api/events'
+import { formatMinutes, toMinutes } from '../lib/format'
+import { rescheduleMessage, statusMessage } from '../lib/today'
 import { useToast } from '../lib/toast'
 
 const byDeadline = (a, b) => a.deadline.localeCompare(b.deadline)
 
-// Bloque de gestiones logísticas dentro del detalle del evento. Crear, editar
-// y eliminar ocurren aquí mismo, sin navegar a otra ruta.
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+// Bloque de gestiones logísticas dentro del detalle del evento. Cada gestión se
+// ve igual que en Hoy (SubtaskItem), con sus mismos botones "Reprogramar",
+// "Hecha" y "Posponer", y además "Editar" y "Eliminar". Todo ocurre aquí mismo,
+// sin navegar a otra ruta.
 export default function SubtaskSection({ eventId, eventDate, subtasks, onChange }) {
   const { toast } = useToast()
   const [adding, setAdding] = useState(false)
-  const [editingId, setEditingId] = useState(null)
-  const [editingStatusId, setEditingStatusId] = useState(null)
+  // Formulario abierto en una gestión: { id, mode: 'edit' | 'reschedule' | 'postpone' }.
+  const [openForm, setOpenForm] = useState(null)
+  const [movedId, setMovedId] = useState(null)
   const [toDelete, setToDelete] = useState(null)
-  const [draftStatuses, setDraftStatuses] = useState({})
-  const [draftNotes, setDraftNotes] = useState({})
+  // Id del botón que recibe el foco tras el próximo render.
+  const focusAfterRender = useRef(null)
 
   // Se suma en minutos para que, p. ej., tres gestiones de 0:20 den 1 h exacta.
   const totalMinutes = subtasks.reduce((sum, s) => sum + toMinutes(s.estimatedHours || 0), 0)
+
+  // Al cerrar "Reprogramar" o "Posponer" el foco vuelve al botón que lo abrió; si
+  // la gestión cambió de lugar en la lista, la página se desplaza hasta ella.
+  useEffect(() => {
+    const id = focusAfterRender.current
+    if (!id) return
+    focusAfterRender.current = null
+    const button = document.getElementById(id)
+    if (!button) return
+    button.focus({ preventScroll: true })
+    button.closest('li')?.scrollIntoView({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
+  })
+
+  function openFormFor(subtask, mode) {
+    setOpenForm({ id: subtask.id, mode })
+    setAdding(false)
+    setMovedId(null)
+  }
+
+  function closeForm(subtask, mode) {
+    focusAfterRender.current = `${mode === 'postpone' ? 'posponer' : 'reprogramar'}-gestion-${subtask.id}`
+    setOpenForm(null)
+  }
 
   async function handleCreate(data) {
     const created = await createSubtask(eventId, data)
@@ -30,8 +60,28 @@ export default function SubtaskSection({ eventId, eventDate, subtasks, onChange 
   async function handleUpdate(id, data) {
     const updated = await updateSubtask(eventId, id, data)
     onChange(subtasks.map((s) => (s.id === id ? updated : s)).sort(byDeadline))
-    setEditingId(null)
+    setOpenForm(null)
     toast({ message: 'Cambios guardados.' })
+  }
+
+  // Si falla o hay conflicto de sobrecarga (US-07), el error llega al
+  // formulario, que conserva la fecha y las horas elegidas.
+  async function handleReschedule(subtask, changes) {
+    const updated = await rescheduleSubtask(subtask.id, changes)
+    onChange(subtasks.map((s) => (s.id === subtask.id ? { ...s, ...updated } : s)).sort(byDeadline))
+    closeForm(subtask, 'reschedule')
+    setMovedId(subtask.id)
+    toast({ message: rescheduleMessage(subtask, updated) })
+  }
+
+  // "Hecha" y "Pendiente" guardan al instante; "Posponer" llega desde su
+  // formulario, que se cierra. Si falla, el error se muestra en la fila o en
+  // el formulario.
+  async function handleStatusChange(subtask, changes) {
+    const updated = await updateSubtaskStatus(subtask.id, changes)
+    onChange(subtasks.map((s) => (s.id === subtask.id ? { ...s, ...updated } : s)))
+    if (changes.status === 'Pospuesta') closeForm(subtask, 'postpone')
+    toast({ message: statusMessage(updated.status) })
   }
 
   async function handleDelete() {
@@ -39,25 +89,6 @@ export default function SubtaskSection({ eventId, eventDate, subtasks, onChange 
     onChange(subtasks.filter((s) => s.id !== toDelete.id))
     toast({ message: 'Gestión eliminada.' })
     setToDelete(null)
-  }
-  
-  async function handleStatusChange(subtask, status, statusNote) {
-    try {
-      const updated = await updateSubtaskStatus(subtask.id, {
-        status,
-        statusNote,
-      })
-
-      onChange(
-        subtasks.map((s) => (s.id === subtask.id ? { ...s, ...updated } : s)),
-      )
-
-      toast({ message: 'Estado de la gestión actualizado.' })
-    } catch (err) {
-      toast({
-        message: err.message || 'No se pudo actualizar el estado.',
-      })
-    }
   }
 
   return (
@@ -72,7 +103,7 @@ export default function SubtaskSection({ eventId, eventDate, subtasks, onChange 
           )}
         </div>
         {subtasks.length > 0 && !adding && (
-          <button type="button" className="btn btn--primary" onClick={() => { setAdding(true); setEditingId(null) }}>
+          <button type="button" className="btn btn--primary" onClick={() => { setAdding(true); setOpenForm(null) }}>
             + Agregar gestión
           </button>
         )}
@@ -104,9 +135,11 @@ export default function SubtaskSection({ eventId, eventDate, subtasks, onChange 
           </button>
         </div>
       ) : (
+        // `eventDate` en cada gestión: Reprogramar limita la nueva fecha a la del evento.
         <ul className="subtasks">
-          {subtasks.map((s) =>
-            editingId === s.id ? (
+          {subtasks.map((s) => {
+            const mode = openForm?.id === s.id ? openForm.mode : null
+            return mode === 'edit' ? (
               <li key={s.id} className="subtasks__item subtasks__item--editing">
                 <SubtaskForm
                   idPrefix={`edit-${s.id}`}
@@ -114,140 +147,36 @@ export default function SubtaskSection({ eventId, eventDate, subtasks, onChange 
                   eventDate={eventDate}
                   submitLabel="Guardar cambios"
                   onSubmit={(data) => handleUpdate(s.id, data)}
-                  onCancel={() => setEditingId(null)}
+                  onCancel={() => setOpenForm(null)}
                 />
               </li>
             ) : (
-              <li key={s.id} className="subtasks__item">
-                {editingStatusId === s.id ? (
-                  <div className="subtasks__item--editing">
-                    <div className="subtasks__main">
-                      <p className="subtasks__name">{s.name}</p>
-                      <p className="muted subtasks__meta">
-                        <span>Plazo: {formatDate(s.deadline)}</span>
-                        <span>{formatHours(s.estimatedHours)}</span>
-                      </p>
-
-                      <div className="subtasks__status">
-                        <label htmlFor={`status-${s.id}`}>Estado</label>
-                        <select
-                          id={`status-${s.id}`}
-                          value={draftStatuses[s.id] ?? s.status ?? 'Pendiente'}
-                          onChange={(e) =>
-                            setDraftStatuses({
-                              ...draftStatuses,
-                              [s.id]: e.target.value,
-                            })
-                          }
-                        >
-                          <option value="Pendiente">Pendiente</option>
-                          <option value="Hecha">Hecha</option>
-                          <option value="Pospuesta">Pospuesta</option>
-                        </select>
-
-                        <label htmlFor={`note-${s.id}`}>Nota (opcional)</label>
-                        <input
-                          id={`note-${s.id}`}
-                          type="text"
-                          placeholder="Escribe una nota..."
-                          value={draftNotes[s.id] ?? s.statusNote ?? ''}
-                          onChange={(e) =>
-                            setDraftNotes({
-                              ...draftNotes,
-                              [s.id]: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                    </div>
-
-                    <div className="subtasks__actions">
-                      <button
-                        type="button"
-                        className="btn btn--small btn--primary"
-                        onClick={async () => {
-                          await handleStatusChange(
-                            s,
-                            draftStatuses[s.id] ?? s.status ?? 'Pendiente',
-                            draftNotes[s.id] ?? s.statusNote ?? '',
-                          )
-                          setEditingStatusId(null)
-                        }}
-                      >
-                        Guardar cambios
-                      </button>
-
-                      <button
-                        type="button"
-                        className="btn btn--small btn--ghost"
-                        onClick={() => {
-                          setEditingStatusId(null)
-                          setDraftStatuses((prev) => {
-                            const next = { ...prev }
-                            delete next[s.id]
-                            return next
-                          })
-                          setDraftNotes((prev) => {
-                            const next = { ...prev }
-                            delete next[s.id]
-                            return next
-                          })
-                        }}
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                ) : (
+              <SubtaskItem
+                key={s.id}
+                itemKey={`gestion-${s.id}`}
+                subtask={{ ...s, eventDate }}
+                openForm={mode}
+                moved={movedId === s.id}
+                onOpenForm={(m) => openFormFor(s, m)}
+                onCloseForm={(m) => closeForm(s, m)}
+                onReschedule={(changes) => handleReschedule(s, changes)}
+                onSaveStatus={(changes) => handleStatusChange(s, changes)}
+                onMovedEnd={() => setMovedId(null)}
+                actionsAfter={
                   <>
-                    <div className="subtasks__main">
-                      <p className="subtasks__name">{s.name}</p>
-                      <p className="muted subtasks__meta">
-                        <span>Plazo: {formatDate(s.deadline)}</span>
-                        <span>{formatHours(s.estimatedHours)}</span>
-                      </p>
-                    </div>
-
-                    <div className="subtasks__actions">
-                      <button
-                        type="button"
-                        className="btn btn--small btn--ghost"
-                        onClick={() => {
-                          setEditingStatusId(s.id)
-                          setEditingId(null)
-                          setAdding(false)
-                        }}
-                      >
-                        Estado
-                      </button>
-
-                      <button
-                        type="button"
-                        className="btn btn--small btn--ghost"
-                        onClick={() => {
-                          setEditingId(s.id)
-                          setEditingStatusId(null)
-                          setAdding(false)
-                        }}
-                        aria-label={`Editar gestión ${s.name}`}
-                      >
-                        Editar
-                      </button>
-
-                      <button
-                        type="button"
-                        className="btn btn--small btn--ghost-danger"
-                        onClick={() => setToDelete(s)}
-                        aria-label={`Eliminar gestión ${s.name}`}
-                      >
-                        Eliminar
-                      </button>
-                    </div>
+                    <button type="button" className="btn btn--small btn--ghost"
+                      onClick={() => openFormFor(s, 'edit')} aria-label={`Editar gestión ${s.name}`}>
+                      Editar
+                    </button>
+                    <button type="button" className="btn btn--small btn--ghost-danger"
+                      onClick={() => setToDelete(s)} aria-label={`Eliminar gestión ${s.name}`}>
+                      Eliminar
+                    </button>
                   </>
-                )}
-              </li>
-            ),
-          )}
+                }
+              />
+            )
+          })}
         </ul>
       )}
 

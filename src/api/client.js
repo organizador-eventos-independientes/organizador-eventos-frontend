@@ -27,6 +27,7 @@ const FIELD_NAMES = {
   plazo: 'deadline',
   horas_estimadas: 'estimatedHours',
   limite_horas_diarias: 'dailyLimit',
+  nota_estado: 'statusNote',
 }
 
 const firstMessage = (v) => (Array.isArray(v) ? String(v[0]) : String(v))
