@@ -98,7 +98,7 @@ export default function EventDetailPage() {
 
       <div className={`event-wrap${editing ? '' : ' event-wrap--tabbed'}`}>
         {!editing && (
-          <span className={`event-tab badge--${event.type}`}>{eventTypeLabel(event.type)}</span>
+          <span className={`event-tab badge--${event.type}`}>{eventTypeLabel(event.type, event.typeOther)}</span>
         )}
         <section className="card" aria-labelledby="event-title">
           {editing ? (
@@ -126,7 +126,12 @@ export default function EventDetailPage() {
               <dl className="details">
                 <div><dt>Fecha y hora</dt><dd>{formatDateTime(event.date)}</dd></div>
                 <div><dt>Lugar</dt><dd>{event.location}</dd></div>
-                <div><dt>Cliente / contacto</dt><dd>{event.client}</dd></div>
+                <div><dt>Cliente</dt><dd>{event.client}</dd></div>
+                {/* Los eventos creados antes de separar el contacto no lo tienen. */}
+                <div>
+                  <dt>Contacto</dt>
+                  <dd>{event.contact || <span className="muted">Sin registrar</span>}</dd>
+                </div>
               </dl>
             </>
           )}

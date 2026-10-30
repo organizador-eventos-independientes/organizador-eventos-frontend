@@ -5,6 +5,7 @@ import {
   listEvents,
   listSubtasks,
 } from '../api/events'
+import { eventTypeLabel } from '../lib/validation'
 
 function ProgressPage() {
   const [events, setEvents] = useState([])
@@ -337,7 +338,7 @@ function ProgressPage() {
                         <span
                           className={`badge badge--${normalizedType}`}
                         >
-                          {event.type || 'Evento'}
+                          {event.type ? eventTypeLabel(event.type, event.typeOther) : 'Evento'}
                         </span>
                       </div>
                     </div>

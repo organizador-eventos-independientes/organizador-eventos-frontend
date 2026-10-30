@@ -8,7 +8,9 @@ function eventToBackend(data) {
   return {
     titulo: data.name,
     tipo: data.type,
+    tipo_otro: data.typeOther,
     cliente: data.client,
+    contacto: data.contact,
     fecha: date,
     hora: time,
     lugar: data.location,
@@ -21,7 +23,9 @@ function eventToFrontend(data) {
     id: data.id,
     name: data.titulo,
     type: data.tipo,
+    typeOther: data.tipo_otro ?? '',
     client: data.cliente,
+    contact: data.contacto,
     date: data.fecha && data.hora
       ? `${data.fecha}T${data.hora}`
       : '',

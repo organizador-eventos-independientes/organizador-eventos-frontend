@@ -20,7 +20,9 @@
 }
 
 
-.theme-toggle {
+/* Botones cuadrados con solo un icono: cambio de tema, configuración y la X
+   que cierra la ventana de configuración. */
+.icon-btn {
   display: grid;
   place-items: center;
   flex: none;
@@ -39,17 +41,18 @@
     transform var(--dur-fast) var(--ease-out);
 }
 
-.theme-toggle:active {
+.icon-btn:active {
   transform: scale(0.96);
 }
 
-/* Al pasar el cursor, la luna o el sol se inclinan un poco. */
-.theme-toggle svg {
+/* Al pasar el cursor, la luna o el sol se inclinan un poco y el engranaje
+   gira. */
+.icon-btn svg {
   transition: transform var(--dur) var(--ease-out);
 }
 
 @media (hover: hover) {
-  .theme-toggle:hover {
+  .icon-btn:hover {
     background: var(--accent-bg);
     border-color: var(--accent);
     color: var(--accent-text);
@@ -57,6 +60,10 @@
 
   .theme-toggle:hover svg {
     transform: rotate(15deg);
+  }
+
+  .settings-toggle:hover svg {
+    transform: rotate(60deg);
   }
 }
 
@@ -458,7 +465,7 @@
   }
 }
 
-/* Caja del menú: "Configuración" (US-12) y "Cerrar sesión", una debajo de otra. */
+/* Caja del menú: "Cerrar sesión" (y, en celulares, el nombre del usuario arriba). */
 .user-menu__box {
   display: flex;
   flex-direction: column;
@@ -813,6 +820,12 @@ html {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 18px;
+}
+
+/* Campo que aparece según lo elegido (ej. "¿Qué tipo de evento es?" con el
+   tipo "Otro"). */
+.form__appear {
+  animation: fade-down var(--dur) var(--ease-out);
 }
 
 .form__note {
@@ -1620,6 +1633,41 @@ html {
   gap: 10px;
 }
 
+/* Ventana de configuración (SettingsButton): más ancha, con la X arriba a la
+   derecha. Si el aviso de conflicto del límite es largo, se desplaza por dentro. */
+.dialog--settings {
+  width: min(520px, calc(100vw - 32px));
+}
+
+.settings__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.settings__head .dialog__title {
+  margin-bottom: 0;
+  padding-top: 4px;
+}
+
+.settings__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings__subtitle {
+  font-size: 1rem;
+  color: var(--text-h);
+}
+
+/* El espacio entre bloques ya lo pone el gap de la sección. */
+.dialog--settings .alert {
+  margin-bottom: 0;
+}
+
 /* ---------- Toasts ----------
    Entran subiendo un poco, una barra inferior marca el tiempo que les queda y
    salen con un fundido (ToastProvider añade .toast--leaving). */
@@ -2010,24 +2058,66 @@ html {
   gap: 8px;
 }
 
-/* Conflicto del límite diario (US-12): cada día que lo impide con sus
-   gestiones y el botón para moverlas o reducirlas. */
-.conflict__days {
+/* Conflicto del límite diario (US-12): una línea con lo que pasa, el botón
+   para usar el mínimo que cabe y, plegadas debajo, las gestiones de los días
+   que lo impiden (cada nombre lleva a su evento). */
+.limit-conflict {
+  gap: 10px;
+}
+
+.limit-conflict__more summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 4px;
+  color: var(--accent-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+}
+
+.limit-conflict__more summary::-webkit-details-marker {
+  display: none;
+}
+
+.limit-conflict__more summary::after {
+  content: '▾';
+  transition: transform var(--dur) var(--ease-out);
+}
+
+.limit-conflict__more[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.limit-conflict__more summary:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.limit-conflict__days {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin: 0;
+  margin: 8px 0 0;
   padding: 0;
   list-style: none;
+  font-size: 0.9rem;
 }
 
-.conflict__subtask {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px 12px;
-  padding-block: 2px;
+/* "lunes, 13 de octubre" -> "Lunes, 13 de octubre". */
+.limit-conflict__days strong {
+  display: inline-block;
+  color: var(--text-h);
+}
+
+.limit-conflict__days strong::first-letter {
+  text-transform: uppercase;
+}
+
+.limit-conflict__list {
+  margin: 2px 0 0;
+  padding-left: 20px;
 }
 
 .conflict__option {
@@ -2226,21 +2316,12 @@ html {
   flex: 1 1 220px;
 }
 
-/* Valor del límite diario junto a su botón (ej. "Límite diario 6 h"). */
-.filters__value {
-  color: var(--accent-text);
-}
-
-/* Formulario del límite diario (US-12): en Configuración y en el panel de Hoy. */
+/* Formulario del límite diario (US-12), en la ventana de configuración. */
 .limit-form {
   display: flex;
   flex-direction: column;
   gap: 12px;
   font-size: 0.95rem;
-}
-
-.filters .limit-form {
-  margin-block: 14px 4px;
 }
 
 /* El recuadro es angosto; la ayuda y el error usan todo el ancho (el error

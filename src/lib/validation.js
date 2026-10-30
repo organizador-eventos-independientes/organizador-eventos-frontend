@@ -8,8 +8,12 @@ export const EVENT_TYPES = [
   { value: 'otro', label: 'Otro', hint: 'Cualquier evento que no encaje en los anteriores.' },
 ]
 
-export const eventTypeLabel = (value) =>
-  EVENT_TYPES.find((t) => t.value === value)?.label ?? 'Otro'
+// Con el tipo "otro" se muestra el que escribió el organizador (ej. "Graduación");
+// los eventos que no lo tienen muestran "Otro".
+export const eventTypeLabel = (value, other) =>
+  (value === 'otro' && other?.trim()) || (EVENT_TYPES.find((t) => t.value === value)?.label ?? 'Otro')
+
+export const TYPE_OTHER_MAX = 40
 
 const isBlank = (v) => v == null || String(v).trim() === ''
 const isValidDate = (v) => !Number.isNaN(new Date(v).getTime())
@@ -26,9 +30,17 @@ export function validateEvent(data, original) {
 
   if (isBlank(data.type)) errors.type = 'Elige el tipo de evento.'
   else if (!EVENT_TYPES.some((t) => t.value === data.type)) errors.type = 'Elige un tipo de la lista.'
+  else if (data.type === 'otro') {
+    if (isBlank(data.typeOther)) errors.typeOther = 'Escribe qué tipo de evento es.'
+    else if (data.typeOther.trim().length > TYPE_OTHER_MAX)
+      errors.typeOther = `El tipo de evento no puede superar ${TYPE_OTHER_MAX} caracteres.`
+  }
 
-  if (isBlank(data.client)) errors.client = 'Indica el cliente o persona de contacto.'
+  if (isBlank(data.client)) errors.client = 'Indica quién es el cliente.'
   else if (data.client.trim().length > 120) errors.client = 'El cliente no puede superar 120 caracteres.'
+
+  if (isBlank(data.contact)) errors.contact = 'Indica cómo contactar al cliente.'
+  else if (data.contact.trim().length > 120) errors.contact = 'El contacto no puede superar 120 caracteres.'
 
   if (isBlank(data.date)) errors.date = 'Selecciona la fecha y hora del evento.'
   else if (!isValidDate(data.date)) errors.date = 'La fecha no es válida.'

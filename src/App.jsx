@@ -8,7 +8,6 @@ import EventListPage from './pages/EventListPage'
 import EventCreatePage from './pages/EventCreatePage'
 import EventDetailPage from './pages/EventDetailPage'
 import TodayPage from './pages/TodayPage'
-import SettingsPage from './pages/SettingsPage'
 import ProgressPage from './pages/ProgressPage'
 import './App.css'
 
@@ -29,7 +28,6 @@ function App() {
               <Route path="/eventos/nuevo" element={<EventCreatePage />} />
               <Route path="/crear" element={<Navigate to="/eventos/nuevo" replace />} />
               <Route path="/evento/:id" element={<EventDetailPage />} />
-              <Route path="/configuracion" element={<SettingsPage />} />
               <Route path="*" element={<Navigate to="/eventos" replace />} />
             </Route>
           </Routes>

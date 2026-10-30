@@ -8,9 +8,19 @@ import { formatDay, formatHours } from '../lib/format'
 // guardar, no se guarda: se conserva el valor escrito y se muestra el error.
 // Si queda por debajo de lo planificado algún día, se muestran las opciones
 // para resolverlo: usar el límite más bajo que cabe, o mover o reducir las
-// gestiones de esos días (con `onReschedule`, en la misma página; si no, desde
-// su evento).
-export default function DailyLimitForm({ idPrefix, limit, onSave, onReschedule, description }) {
+// gestiones de esos días desde su evento (`onNavigate` se llama al ir a él).
+
+// Título corto del conflicto, armado con los días que devuelve el backend:
+// "Con 2 h no te alcanza: el lunes, 13 de octubre ya tienes 6 h."
+function conflictTitle({ limit, days }) {
+  const where =
+    days.length === 1
+      ? `el ${formatDay(days[0].date)} ya tienes ${formatHours(days[0].planned)}`
+      : `${days.length} días ya tienen más`
+  return `Con ${formatHours(limit)} no te alcanza: ${where}.`
+}
+
+export default function DailyLimitForm({ idPrefix, limit, onSave, onNavigate }) {
   const [value, setValue] = useState(limit != null ? String(limit) : '')
   const [error, setError] = useState('')
   const [submitted, setSubmitted] = useState(false)
@@ -74,7 +84,6 @@ export default function DailyLimitForm({ idPrefix, limit, onSave, onReschedule, 
 
   return (
     <form className="limit-form" onSubmit={handleSubmit} noValidate>
-      {description && <p className="muted">{description}</p>}
       {formError && (
         <p className="alert alert--error" role="alert">
           {formError}
@@ -89,60 +98,60 @@ export default function DailyLimitForm({ idPrefix, limit, onSave, onReschedule, 
         )}
       </Field>
 
+      {/* Lo principal a la vista: qué pasa y un botón para usar el mínimo que
+          cabe. Las gestiones que habría que mover van plegadas debajo (abiertas
+          solo si ningún límite cabe, porque entonces es la única salida). */}
       {conflict && (
-        <div ref={conflictRef} className="conflict" role="alert" tabIndex={-1}>
-          <p className="conflict__title">{conflict.message}</p>
-          <p className="conflict__question">¿Cómo quieres resolverlo?</p>
-          <div className="conflict__options">
-            <button type="button" className="conflict__option" onClick={applyMinimum}
-              disabled={busy || conflict.minLimit == null}>
-              <strong>Usar el mínimo posible</strong>
-              <span>
-                {conflict.minLimit != null
-                  ? `Dejar el límite en ${formatHours(conflict.minLimit)}, lo justo para lo que ya tienes planificado.`
-                  : `Algún día pasa de ${formatHours(DAILY_LIMIT_MAX)}: mueve o reduce sus gestiones.`}
-              </span>
-            </button>
-          </div>
-          <p className="conflict__question">O mueve o reduce las gestiones de estos días y vuelve a guardar el límite:</p>
-          <ul className="conflict__days">
-            {conflict.days.map((day) => (
-              <li key={day.date}>
-                <p>
-                  <strong>{formatDay(day.date)}</strong>: {formatHours(day.planned)} planificadas,{' '}
-                  {formatHours(day.excess)} de más.
-                </p>
-                <ul className="conflict__list">
-                  {day.subtasks.map((s) => (
-                    <li key={s.id} className="conflict__subtask">
-                      <span>
-                        {s.name} <span className="muted">· {s.eventName} · {formatHours(s.estimatedHours)}</span>
-                      </span>
-                      {onReschedule ? (
-                        <button type="button" className="btn btn--small btn--ghost" onClick={() => onReschedule(s.id)}
-                          aria-label={`Reprogramar gestión ${s.name}`}>
-                          Reprogramar
-                        </button>
-                      ) : (
-                        <Link to={`/evento/${s.eventId}`} className="btn btn--small btn--ghost"
+        <div ref={conflictRef} className="conflict limit-conflict" role="alert" tabIndex={-1}>
+          <p className="conflict__title">{conflictTitle(conflict)}</p>
+          {conflict.minLimit != null ? (
+            <div>
+              <button type="button" className="btn btn--small btn--primary" onClick={applyMinimum} disabled={busy}>
+                {busy ? 'Guardando…' : `Usar el mínimo: ${formatHours(conflict.minLimit)}`}
+              </button>
+            </div>
+          ) : (
+            <p>Ningún límite alcanza (el máximo es {formatHours(DAILY_LIMIT_MAX)}): mueve o reduce gestiones.</p>
+          )}
+          <details className="limit-conflict__more" open={conflict.minLimit == null}>
+            <summary>
+              {conflict.minLimit != null ? 'O mueve gestiones de ' : 'Gestiones de '}
+              {conflict.days.length === 1 ? 'ese día' : 'esos días'}
+            </summary>
+            <ul className="limit-conflict__days">
+              {conflict.days.map((day) => (
+                <li key={day.date}>
+                  <p>
+                    <strong>{formatDay(day.date)}</strong>{' '}
+                    <span className="muted">· sobran {formatHours(day.excess)}</span>
+                  </p>
+                  <ul className="limit-conflict__list">
+                    {day.subtasks.map((s) => (
+                      <li key={s.id}>
+                        <Link to={`/evento/${s.eventId}`} onClick={onNavigate}
                           aria-label={`Ver evento ${s.eventName} para editar la gestión ${s.name}`}>
-                          Ver evento
-                        </Link>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ))}
-          </ul>
+                          {s.name}
+                        </Link>{' '}
+                        <span className="muted">· {s.eventName} · {formatHours(s.estimatedHours)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          </details>
         </div>
       )}
 
-      <div>
-        <button type="submit" className="btn btn--small btn--primary" disabled={busy}>
-          {busy ? 'Guardando…' : 'Guardar límite'}
-        </button>
-      </div>
+      {/* Con el aviso abierto, guardar el mismo valor daría el mismo aviso: el
+          botón vuelve al cambiar el valor. */}
+      {!conflict && (
+        <div>
+          <button type="submit" className="btn btn--small btn--primary" disabled={busy}>
+            {busy ? 'Guardando…' : 'Guardar límite'}
+          </button>
+        </div>
+      )}
     </form>
   )
 }

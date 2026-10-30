@@ -2,14 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import Logo from './Logo'
 import ThemeToggle from './ThemeToggle'
+import SettingsButton from './SettingsButton'
 import { logout } from '../api/auth'
 import { setSession, useSession } from '../lib/session'
 
-// Barra superior: logo, título y módulos a la izquierda; cambio de tema y
-// usuario a la derecha (módulos y usuario solo con sesión iniciada). En
-// pantallas angostas los módulos bajan a una fila de pestañas (App.css).
-// "Configuración" y "Cerrar sesión" aparecen al pasar el cursor sobre el
-// usuario o al pulsarlo (con el dedo, el ratón o el teclado).
+// Barra superior: logo, título y módulos a la izquierda; cambio de tema,
+// configuración y usuario a la derecha (módulos, configuración y usuario solo
+// con sesión iniciada). En pantallas angostas los módulos bajan a una fila de
+// pestañas (App.css).
+// "Cerrar sesión" aparece al pasar el cursor sobre el usuario o al pulsarlo
+// (con el dedo, el ratón o el teclado).
 // La barra queda fija arriba al desplazar la página (App.css).
 export default function TopBar() {
   const session = useSession()
@@ -83,6 +85,7 @@ export default function TopBar() {
       )}
       <div className="topbar__end">
         <ThemeToggle />
+        {session && <SettingsButton />}
         {session && (
           // Al salir el foco del menú (con Tab) este se cierra.
           <div ref={menuRef} className={`user-menu${menuOpen ? ' user-menu--open' : ''}`}
@@ -100,9 +103,6 @@ export default function TopBar() {
                   <strong>{session.user.name}</strong>
                   <span className="muted">@{session.user.username}</span>
                 </p>
-                <Link to="/configuracion" className="user-menu__item" onClick={() => setMenuOpen(false)}>
-                  Configuración
-                </Link>
                 <button type="button" className="user-menu__item user-menu__item--danger" onClick={handleLogout}>
                   Cerrar sesión
                 </button>

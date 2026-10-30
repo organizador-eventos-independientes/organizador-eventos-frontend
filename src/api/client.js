@@ -19,7 +19,9 @@ export class ApiError extends Error {
 const FIELD_NAMES = {
   titulo: 'name',
   tipo: 'type',
+  tipo_otro: 'typeOther',
   cliente: 'client',
+  contacto: 'contact',
   fecha: 'date',
   hora: 'date',
   lugar: 'location',

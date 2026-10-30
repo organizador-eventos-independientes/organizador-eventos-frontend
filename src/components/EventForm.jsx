@@ -1,17 +1,19 @@
 import { useRef, useState } from 'react'
 import Field from './Field'
-import { EVENT_TYPES, validateEvent } from '../lib/validation'
+import { EVENT_TYPES, TYPE_OTHER_MAX, validateEvent } from '../lib/validation'
 import { fromDateTimeLocal, nowDateTimeLocal, toDateTimeLocal } from '../lib/format'
 
-const EMPTY = { name: '', type: '', client: '', date: '', location: '' }
-const FIELD_ORDER = ['name', 'type', 'client', 'date', 'location']
+const EMPTY = { name: '', type: '', typeOther: '', client: '', contact: '', date: '', location: '' }
+const FIELD_ORDER = ['name', 'type', 'typeOther', 'client', 'contact', 'date', 'location']
 
 function toFormValues(event) {
   if (!event) return EMPTY
   return {
     name: event.name ?? '',
     type: event.type ?? '',
+    typeOther: event.typeOther ?? '',
     client: event.client ?? '',
+    contact: event.contact ?? '',
     date: toDateTimeLocal(event.date),
     location: event.location ?? '',
   }
@@ -63,7 +65,10 @@ export default function EventForm({
       await onSubmit({
         name: values.name.trim(),
         type: values.type,
+        // Si cambió de "otro" a otro tipo, lo escrito no se envía.
+        typeOther: values.type === 'otro' ? values.typeOther.trim() : '',
         client: values.client.trim(),
+        contact: values.contact.trim(),
         date: fromDateTimeLocal(values.date),
         location: values.location.trim(),
       })
@@ -98,26 +103,51 @@ export default function EventForm({
         )}
       </Field>
 
-      <Field id="event-type" label="Tipo de evento" required error={errors.type}
-        hint={selectedType ? selectedType.hint : 'El tipo te ayuda a organizar y filtrar tus eventos.'}>
-        {(p) => (
-          <select {...p} name="type" value={values.type} onChange={(e) => update('type', e.target.value)}>
-            <option value="" disabled>Selecciona un tipo</option>
-            {EVENT_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>{t.label}</option>
-            ))}
-          </select>
-        )}
-      </Field>
+      {/* Con "Otro" aparece al lado un campo para escribir cuál es. */}
+      <div className="form__row">
+        <Field id="event-type" label="Tipo de evento" required error={errors.type}
+          hint={selectedType ? selectedType.hint : 'El tipo te ayuda a organizar y filtrar tus eventos.'}>
+          {(p) => (
+            <select {...p} name="type" value={values.type} onChange={(e) => update('type', e.target.value)}>
+              <option value="" disabled>Selecciona un tipo</option>
+              {EVENT_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+          )}
+        </Field>
 
-      <Field id="event-client" label="Cliente o contacto" required error={errors.client}
-        hint="Quién te contrató o con quién coordinas, ej. “Ana Pérez – 300 123 4567”.">
-        {(p) => (
-          <input {...p} name="client" type="text" maxLength={120} autoComplete="off"
-            placeholder="Ej. Ana Pérez – 300 123 4567" value={values.client}
-            onChange={(e) => update('client', e.target.value)} />
+        {values.type === 'otro' && (
+          <div className="form__appear">
+            <Field id="event-type-other" label="¿Qué tipo de evento es?" required error={errors.typeOther}
+              hint="Así lo verás en tus eventos.">
+              {(p) => (
+                <input {...p} name="typeOther" type="text" maxLength={TYPE_OTHER_MAX} autoComplete="off"
+                  placeholder="Ej. Graduación" value={values.typeOther}
+                  onChange={(e) => update('typeOther', e.target.value)} />
+              )}
+            </Field>
+          </div>
         )}
-      </Field>
+      </div>
+
+      <div className="form__row">
+        <Field id="event-client" label="Cliente" required error={errors.client} hint="Quién te contrató.">
+          {(p) => (
+            <input {...p} name="client" type="text" maxLength={120} autoComplete="off"
+              placeholder="Ej. Ana Pérez" value={values.client}
+              onChange={(e) => update('client', e.target.value)} />
+          )}
+        </Field>
+
+        <Field id="event-contact" label="Contacto" required error={errors.contact} hint="Teléfono o correo del cliente.">
+          {(p) => (
+            <input {...p} name="contact" type="text" maxLength={120} autoComplete="off"
+              placeholder="Ej. 300 123 4567" value={values.contact}
+              onChange={(e) => update('contact', e.target.value)} />
+          )}
+        </Field>
+      </div>
 
       <div className="form__row">
         <Field id="event-date" label="Fecha y hora del evento" required error={errors.date}>

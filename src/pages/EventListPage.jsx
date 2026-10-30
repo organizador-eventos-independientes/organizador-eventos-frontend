@@ -69,7 +69,7 @@ export default function EventListPage() {
           {events.map((ev) => (
             <li key={ev.id}>
               <Link to={`/evento/${ev.id}`} className="event-card">
-                <span className={`badge badge--${ev.type}`}>{eventTypeLabel(ev.type)}</span>
+                <span className={`badge badge--${ev.type}`}>{eventTypeLabel(ev.type, ev.typeOther)}</span>
                 <span className="event-card__name">{ev.name}</span>
                 <span className="muted event-card__meta">{formatDateTime(ev.date)}</span>
                 <span className="muted event-card__meta">{ev.location} · {ev.client}</span>
